@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>Console</title>
+<script src="js/jquery-1.11.2.min.js"></script>
+<script src="js/jquery.terminal-0.8.8.min.js"></script>
+<script src="js/terminal.js"></script>
+<script>
+$(function() {
+//
+// 	$('#terminal').terminal({
+// 		welcome: 'jquery.terminal example - Simple usage\n\
+// Type \txhelp\t-help\tx to see a list of available commands.'
+// 	});
+/*
+  $('#terminal').terminal(function(command, term) {
+    var args = command.split(' ');
+
+    switch (args[0]) {
+      case 'list':
+        $.ajax({
+          url: 'cmd?command=list',
+          success: function(data) {
+            var response = $.parseJSON(data);
+            for(i in response) {
+              term.echo(response[i].class + ' ' + response[i].method);
+            }
+            $(window).scrollTop($(document).height());
+          }
+        });
+        break;
+      case 'parse':
+        $.ajax({
+          url: 'cmd?command=parse&class=' + args[1] + '&method=' + args[2],
+          success: function(data) {
+
+          }
+        });
+        break;
+      case 'find':
+        $.ajax({
+          url: 'cmd?command=find&class=' + args[1] + '&method=' + args[2],
+          success: function(data) {
+            var response = $.parseJSON(data);
+            for (i in response) {
+              term.echo(response[i].ClassName + ' ' + response[i].MethodName + '(' + response[i].Self + ')');
+              term.echo('\t' + response[i].ReturnValue + '(' + response[i].ReturnType + '): ' + response[i].ReturnDescription)
+              for (j in response[i].Arguments) {
+                var line = '\t' + response[i].Arguments[j].ArgValue;
+                line += '(' + response[i].Arguments[j].ArgType + ')';
+                if (response[i].Arguments[j].ArgDescription.length > 0) {
+                  line += ': ' + response[i].Arguments[j].ArgDescription;
+                }
+                term.echo(line);
+              }
+            }
+          }
+        });
+        break;
+      default:
+        term.echo('undefined command \'' + command + '\'');
+        break;
+    }
+  });
+});
+*/
+</script>
+<link rel="stylesheet" type="text/css" href="terminal.css" />
+<style type="text/css">
+#terminal {
+	position: absolute;
+	top: 0;
+	left: 0;
+	width: 100%;
+	height: 50%;
+}
+
+#snippets {
+	position: absolute;
+	bottom: 0;
+	left: 0;
+	width: 100%;
+	height: 50%;
+}
+
+#snippets > * {
+	display: block;
+	padding: 5px;
+}
+
+#snippets > a {
+	font-family: monospace;
+}
+
+#snippets > a:hover {
+	background-color: lightgray;
+}
+</style>
+</head>
+<body>
+<div id="terminal"></div>
+</body>
+</html>

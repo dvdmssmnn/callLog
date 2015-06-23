@@ -1,0 +1,7 @@
+/out/*
+/Analyzer/bin/*
+/CodeGenerator/bin/*
+/*.ipa
+*.sqlite*
+/argTrace/Generated/*.mm
+/InjectFrameworks/callLog.framework/*
