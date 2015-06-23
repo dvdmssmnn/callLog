@@ -26,8 +26,8 @@ void logMsg(NSString *string)
 {
     static dispatch_once_t onceToken;
     dispatch_once(&onceToken, ^{
-//        f = fopen([[NSTemporaryDirectory() stringByAppendingString:@"iosLog.txt"] UTF8String], "w");
-        f = fopen("/tmp/mylog.txt", "w");
+        f = fopen([[NSTemporaryDirectory() stringByAppendingString:@"iosLog.txt"] UTF8String], "w");
+//        f = fopen("/tmp/mylog.txt", "w");
     });
     fprintf(f, "%s\n", [string UTF8String]);
     fflush(f);
