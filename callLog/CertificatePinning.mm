@@ -19,25 +19,20 @@
 //OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #import <Foundation/Foundation.h>
-#import <CydiaSubstrate/CydiaSubstrate.h>
 #import <CommonCrypto/CommonCrypto.h>
 #import <sstream>
 #import "CertificatePinning.h"
+#import <dlfcn.h>
+#import "fishhook.h"
+#import <objc/runtime.h>
 
 id (*original_initWithTrust)(id, SEL, SecTrustRef);
 id __initWithTrustHook(id self, SEL _cmd, SecTrustRef trust);
 
-id (*original_initWithUserPasswordPersistence)(id, SEL, NSString*, NSString*, NSURLCredentialPersistence);
-id __initWithUserPasswordPersistence(id self, SEL _cmd, NSString *user, NSString *password, NSURLCredentialPersistence persistence);
-
-id (*original_initWithIdentityCertificatesPersistence)(id, SEL, SecIdentityRef, NSArray*, NSURLCredentialPersistence);
-id __initWithIdentityCertificatesPersistence(id self, SEL _cmd, SecIdentityRef identity, NSArray *certArray, NSURLCredentialPersistence persistence);
 
 __attribute__((constructor))
 static void initialize() {
-    MSHookMessage([NSURLCredential class], @selector(initWithTrust:), &__initWithTrustHook, &original_initWithTrust);
-    MSHookMessage([NSURLCredential class], @selector(initWithUser:password:persistence:), &__initWithUserPasswordPersistence, &original_initWithUserPasswordPersistence);
-    MSHookMessage([NSURLCredential class], @selector(initWithIdentity:certificates:persistence:), &__initWithIdentityCertificatesPersistence, &original_initWithIdentityCertificatesPersistence);
+    original_initWithTrust = (id(*)(id, SEL, SecTrustRef)) method_setImplementation(class_getInstanceMethod([NSURLCredential class], @selector(initWithTrust:)), (IMP)__initWithTrustHook);
 }
 
 static dispatch_once_t onceToken;
@@ -80,16 +75,6 @@ id __initWithTrustHook(id self, SEL _cmd, SecTrustRef trust)
         store_certificate(certificate);
     }
     return original_initWithTrust(self, _cmd, trust);
-}
-
-id __initWithUserPasswordPersistence(id self, SEL _cmd, NSString *user, NSString *password, NSURLCredentialPersistence persistence)
-{
-    return original_initWithUserPasswordPersistence(self, _cmd, user, password, persistence);
-}
-
-id __initWithIdentityCertificatesPersistence(id self, SEL _cmd, SecIdentityRef identity, NSArray *certArray, NSURLCredentialPersistence persistence)
-{
-    return original_initWithIdentityCertificatesPersistence(self, _cmd, identity, certArray, persistence);
 }
 
 NSArray *get_trusted_certificates()

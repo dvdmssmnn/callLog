@@ -32,7 +32,6 @@
 #import "SQLiteStorage.h"
 #import "Whitelists.h"
 #import "Config.h"
-#import <CydiaSubstrate/CydiaSubstrate.h>
 #import "log.h"
 
 #define ARG_LENGTH 256

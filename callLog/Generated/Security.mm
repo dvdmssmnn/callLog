@@ -28,8 +28,9 @@
 #import <pthread.h>
 #import <pthread.h>
 #import "Config.h"
-#import <CydiaSubstrate/CydiaSubstrate.h>
+#import "fishhook.h"
 #import <semaphore.h>
+#import <dlfcn.h>
 #import <Security/Security.h>
 
 using namespace std;
@@ -55,37 +56,57 @@ OSStatus ____SecItemUpdate(CFDictionaryRef query, CFDictionaryRef attributesToUp
 
 OSStatus ____SecItemDelete(CFDictionaryRef query);
 
-int (*original_SecRandomCopyBytes)(SecRandomRef, size_t, uint8_t *);
-OSStatus (*original_SecKeyGeneratePair)(CFDictionaryRef, SecKeyRef *, SecKeyRef *);
-OSStatus (*original_SecKeyRawSign)(SecKeyRef, SecPadding, const uint8_t *, size_t, uint8_t *, size_t *);
-OSStatus (*original_SecKeyRawVerify)(SecKeyRef, SecPadding, const uint8_t *, size_t, const uint8_t *, size_t);
-OSStatus (*original_SecKeyEncrypt)(SecKeyRef, SecPadding, const uint8_t *, size_t, uint8_t *, size_t *);
-OSStatus (*original_SecKeyDecrypt)(SecKeyRef, SecPadding, const uint8_t *, size_t, uint8_t *, size_t *);
-size_t (*original_SecKeyGetBlockSize)(SecKeyRef);
-OSStatus (*original_SecItemCopyMatching)(CFDictionaryRef, CFTypeRef *);
-OSStatus (*original_SecItemAdd)(CFDictionaryRef, CFTypeRef *);
-OSStatus (*original_SecItemUpdate)(CFDictionaryRef, CFDictionaryRef);
-OSStatus (*original_SecItemDelete)(CFDictionaryRef);
+int(*original_SecRandomCopyBytes)(SecRandomRef, size_t, uint8_t *);
+OSStatus(*original_SecKeyGeneratePair)(CFDictionaryRef, SecKeyRef *, SecKeyRef *);
+OSStatus(*original_SecKeyRawSign)(SecKeyRef, SecPadding, const uint8_t *, size_t, uint8_t *, size_t *);
+OSStatus(*original_SecKeyRawVerify)(SecKeyRef, SecPadding, const uint8_t *, size_t, const uint8_t *, size_t);
+OSStatus(*original_SecKeyEncrypt)(SecKeyRef, SecPadding, const uint8_t *, size_t, uint8_t *, size_t *);
+OSStatus(*original_SecKeyDecrypt)(SecKeyRef, SecPadding, const uint8_t *, size_t, uint8_t *, size_t *);
+size_t(*original_SecKeyGetBlockSize)(SecKeyRef);
+OSStatus(*original_SecItemCopyMatching)(CFDictionaryRef, CFTypeRef *);
+OSStatus(*original_SecItemAdd)(CFDictionaryRef, CFTypeRef *);
+OSStatus(*original_SecItemUpdate)(CFDictionaryRef, CFDictionaryRef);
+OSStatus(*original_SecItemDelete)(CFDictionaryRef);
 __attribute__((constructor))
 static void initialize() {
     dispatch_async(dispatch_get_main_queue(), ^ {
-        MSHookFunction((void*)&SecRandomCopyBytes, (void*)&____SecRandomCopyBytes, (void**)&original_SecRandomCopyBytes);
-        MSHookFunction((void*)&SecKeyGeneratePair, (void*)&____SecKeyGeneratePair, (void**)&original_SecKeyGeneratePair);
-        MSHookFunction((void*)&SecKeyRawSign, (void*)&____SecKeyRawSign, (void**)&original_SecKeyRawSign);
-        MSHookFunction((void*)&SecKeyRawVerify, (void*)&____SecKeyRawVerify, (void**)&original_SecKeyRawVerify);
-        MSHookFunction((void*)&SecKeyEncrypt, (void*)&____SecKeyEncrypt, (void**)&original_SecKeyEncrypt);
-        MSHookFunction((void*)&SecKeyDecrypt, (void*)&____SecKeyDecrypt, (void**)&original_SecKeyDecrypt);
-        MSHookFunction((void*)&SecKeyGetBlockSize, (void*)&____SecKeyGetBlockSize, (void**)&original_SecKeyGetBlockSize);
-        MSHookFunction((void*)&SecItemCopyMatching, (void*)&____SecItemCopyMatching, (void**)&original_SecItemCopyMatching);
-        MSHookFunction((void*)&SecItemAdd, (void*)&____SecItemAdd, (void**)&original_SecItemAdd);
-        MSHookFunction((void*)&SecItemUpdate, (void*)&____SecItemUpdate, (void**)&original_SecItemUpdate);
-        MSHookFunction((void*)&SecItemDelete, (void*)&____SecItemDelete, (void**)&original_SecItemDelete);
+        struct rebinding rebinds[11];
+        original_SecRandomCopyBytes = (int(*)(SecRandomRef, size_t, uint8_t *))SecRandomCopyBytes;
+        rebinds[0].name = (char*) "SecRandomCopyBytes";
+        rebinds[0].replacement = (void*) ____SecRandomCopyBytes;
+        original_SecKeyGeneratePair = (OSStatus(*)(CFDictionaryRef, SecKeyRef *, SecKeyRef *))SecKeyGeneratePair;
+        rebinds[1].name = (char*) "SecKeyGeneratePair";
+        rebinds[1].replacement = (void*) ____SecKeyGeneratePair;
+        original_SecKeyRawSign = (OSStatus(*)(SecKeyRef, SecPadding, const uint8_t *, size_t, uint8_t *, size_t *))SecKeyRawSign;
+        rebinds[2].name = (char*) "SecKeyRawSign";
+        rebinds[2].replacement = (void*) ____SecKeyRawSign;
+        original_SecKeyRawVerify = (OSStatus(*)(SecKeyRef, SecPadding, const uint8_t *, size_t, const uint8_t *, size_t))SecKeyRawVerify;
+        rebinds[3].name = (char*) "SecKeyRawVerify";
+        rebinds[3].replacement = (void*) ____SecKeyRawVerify;
+        original_SecKeyEncrypt = (OSStatus(*)(SecKeyRef, SecPadding, const uint8_t *, size_t, uint8_t *, size_t *))SecKeyEncrypt;
+        rebinds[4].name = (char*) "SecKeyEncrypt";
+        rebinds[4].replacement = (void*) ____SecKeyEncrypt;
+        original_SecKeyDecrypt = (OSStatus(*)(SecKeyRef, SecPadding, const uint8_t *, size_t, uint8_t *, size_t *))SecKeyDecrypt;
+        rebinds[5].name = (char*) "SecKeyDecrypt";
+        rebinds[5].replacement = (void*) ____SecKeyDecrypt;
+        original_SecKeyGetBlockSize = (size_t(*)(SecKeyRef))SecKeyGetBlockSize;
+        rebinds[6].name = (char*) "SecKeyGetBlockSize";
+        rebinds[6].replacement = (void*) ____SecKeyGetBlockSize;
+        original_SecItemCopyMatching = (OSStatus(*)(CFDictionaryRef, CFTypeRef *))SecItemCopyMatching;
+        rebinds[7].name = (char*) "SecItemCopyMatching";
+        rebinds[7].replacement = (void*) ____SecItemCopyMatching;
+        original_SecItemAdd = (OSStatus(*)(CFDictionaryRef, CFTypeRef *))SecItemAdd;
+        rebinds[8].name = (char*) "SecItemAdd";
+        rebinds[8].replacement = (void*) ____SecItemAdd;
+        original_SecItemUpdate = (OSStatus(*)(CFDictionaryRef, CFDictionaryRef))SecItemUpdate;
+        rebinds[9].name = (char*) "SecItemUpdate";
+        rebinds[9].replacement = (void*) ____SecItemUpdate;
+        original_SecItemDelete = (OSStatus(*)(CFDictionaryRef))SecItemDelete;
+        rebinds[10].name = (char*) "SecItemDelete";
+        rebinds[10].replacement = (void*) ____SecItemDelete;
     });
 }
 
-__attribute__((constructor))
-static void constructor() {
-}
 int ____SecRandomCopyBytes(SecRandomRef rnd, size_t count, uint8_t * bytes)
 {
     if (!is_enabled() || !enabled_) {

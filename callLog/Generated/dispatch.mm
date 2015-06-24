@@ -10,7 +10,8 @@
 #import "Config.h"
 #import "HookHelper.h"
 #import <semaphore.h>
-#import <CydiaSubstrate/CydiaSubstrate.h>
+#import "fishhook.h"
+#import <dlfcn.h>
 
 using namespace std;
 
@@ -25,17 +26,20 @@ void (*original_dispatch_async)(dispatch_queue_t, dispatch_block_t);
 void (*original__dispatch_call_block_and_release)(void *, void *);
 __attribute__((constructor))
 static void initialize() {
-//    dispatch_async(dispatch_get_main_queue(), ^ {
-        pthread_mutex_init(&dispatched_blocks_mutex, 0);
-//        MSHookFunction((void*)&dispatch_async, (void*)&____dispatch_async, (void**)&original_dispatch_async);
-        void *dispatch_async_symbol = 0;
-        MSHookSymbol(dispatch_async_symbol, "_dispatch_async");
-        MSHookFunction(dispatch_async_symbol, (void*)&____dispatch_async, (void**)&original_dispatch_async);
+    dispatch_async(dispatch_get_main_queue(), ^{
+        struct rebinding rebinds[2];
         
-        void *_dispatch_call_block_and_release_symbol = 0;
-        MSHookSymbol(_dispatch_call_block_and_release_symbol, "__dispatch_call_block_and_release");
-        MSHookFunction(_dispatch_call_block_and_release_symbol, (void*)&_____dispatch_call_block_and_release, (void**)&original__dispatch_call_block_and_release);
-//    });
+        original_dispatch_async = (void(*)(dispatch_queue_t, dispatch_block_t))dispatch_async;
+        rebinds[0].name = (char*)"dispatch_async";
+        rebinds[0].replacement = (void*) ____dispatch_async;
+        
+        void *handle = dlopen("/usr/lib/system/libdispatch.dylib", RTLD_NOW);
+        
+        original__dispatch_call_block_and_release = (void(*)(void*, void*))dlsym(handle, "_dispatch_call_block_and_release");
+        rebinds[1].name = (char*)"dispatch_call_block_and_release";
+        rebinds[1].replacement = (void*)_____dispatch_call_block_and_release;
+        
+    });
 }
 
 
