@@ -64,6 +64,7 @@ result = subprocess.call("unzip \"" + os.path.abspath(infile) + "\" -d \"" + tmp
 if result != 0:
     print("Could not unpack original IPA")
     exit()
+subprocess.call("rm -rf \"" + tmp_dir + "\"/__MACOSX", shell=True, stdout=FNULL)
 
 stdout = os.popen("find \"" + tmp_dir + "\" -iname \"*.app\"").read().rstrip().split("\n")[0]
 
