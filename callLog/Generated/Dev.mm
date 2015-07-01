@@ -28,8 +28,9 @@
 #import <pthread.h>
 #import <pthread.h>
 #import "Config.h"
-#import <CydiaSubstrate/CydiaSubstrate.h>
+#import "fishhook.h"
 #import <semaphore.h>
+#import <dlfcn.h>
 #include <unistd.h>
 
 using namespace std;
@@ -73,89 +74,94 @@ int ____close(int fd);
 
 void * ____SSLHandshake(void * a, void * b);
 
-void (*original_CFURLRequestSetHTTPRequestBody)(CFTypeRef, CFDataRef);
-void (*original_CFURLRequestSetHTTPRequestBodyStream)(CFTypeRef, CFReadStreamRef);
-CFTypeRef (*original_CFURLConnectionCreate)(CFAllocatorRef, CFTypeRef, CFTypeRef *);
-CFTypeRef (*original_CFURLConnectionCreateWithProperties)(CFAllocatorRef, CFTypeRef, CFTypeRef *, CFDictionaryRef);
-void (*original_CFURLRequestSetHTTPHeaderFieldValue)(CFTypeRef, CFStringRef, CFStringRef);
-void (*original_CFURLRequestSetMultipleHTTPHeaderFields)(CFTypeRef, CFDictionaryRef);
-void (*original_CFURLRequestAppendHTTPHeaderFieldValue)(CFTypeRef, CFStringRef, CFStringRef);
-CFTypeRef (*original_CFURLRequestCreateMutable)(CFAllocatorRef, CFURLRef, int, CFTimeInterval, CFURLRef);
-CFTypeRef (*original_CFURLRequestCreateMutableCopy)(CFAllocatorRef, CFTypeRef);
-CFTypeRef (*original_CFURLRequestCreateMutableHTTPRequest)(CFAllocatorRef, CFTypeRef, CFArrayRef, int, CFTimeInterval, CFURLRef);
-CFTypeRef (*original_CFURLRequestCreateHTTPRequest)(CFAllocatorRef, CFTypeRef, CFArrayRef, int, CFTimeInterval, CFURLRef);
-CFTypeRef (*original_CFURLRequestCreateCopy)(CFAllocatorRef, CFTypeRef);
-void (*original_CFURLRequestSetURL)(CFTypeRef, CFTypeRef);
-void (*original_CFURLConnectionUseCredential)(CFTypeRef, CFTypeRef, CFTypeRef);
-CFTypeRef (*original_CFURLCredentialCreate)(CFAllocatorRef, CFStringRef, CFStringRef, CFStringRef, int);
-void (*original__NSWriteDataToFileWithExtendedAttributes)(CFStringRef, CFDataRef, void *, CFDictionaryRef);
-ssize_t (*original_write)(int, const void *, size_t);
-int (*original_open)(char *, int, int);
-int (*original_close)(int);
-void * (*original_SSLHandshake)(void *, void *);
+void(*original_CFURLRequestSetHTTPRequestBody)(CFTypeRef, CFDataRef);
+void(*original_CFURLRequestSetHTTPRequestBodyStream)(CFTypeRef, CFReadStreamRef);
+CFTypeRef(*original_CFURLConnectionCreate)(CFAllocatorRef, CFTypeRef, CFTypeRef *);
+CFTypeRef(*original_CFURLConnectionCreateWithProperties)(CFAllocatorRef, CFTypeRef, CFTypeRef *, CFDictionaryRef);
+void(*original_CFURLRequestSetHTTPHeaderFieldValue)(CFTypeRef, CFStringRef, CFStringRef);
+void(*original_CFURLRequestSetMultipleHTTPHeaderFields)(CFTypeRef, CFDictionaryRef);
+void(*original_CFURLRequestAppendHTTPHeaderFieldValue)(CFTypeRef, CFStringRef, CFStringRef);
+CFTypeRef(*original_CFURLRequestCreateMutable)(CFAllocatorRef, CFURLRef, int, CFTimeInterval, CFURLRef);
+CFTypeRef(*original_CFURLRequestCreateMutableCopy)(CFAllocatorRef, CFTypeRef);
+CFTypeRef(*original_CFURLRequestCreateMutableHTTPRequest)(CFAllocatorRef, CFTypeRef, CFArrayRef, int, CFTimeInterval, CFURLRef);
+CFTypeRef(*original_CFURLRequestCreateHTTPRequest)(CFAllocatorRef, CFTypeRef, CFArrayRef, int, CFTimeInterval, CFURLRef);
+CFTypeRef(*original_CFURLRequestCreateCopy)(CFAllocatorRef, CFTypeRef);
+void(*original_CFURLRequestSetURL)(CFTypeRef, CFTypeRef);
+void(*original_CFURLConnectionUseCredential)(CFTypeRef, CFTypeRef, CFTypeRef);
+CFTypeRef(*original_CFURLCredentialCreate)(CFAllocatorRef, CFStringRef, CFStringRef, CFStringRef, int);
+void(*original__NSWriteDataToFileWithExtendedAttributes)(CFStringRef, CFDataRef, void *, CFDictionaryRef);
+ssize_t(*original_write)(int, const void *, size_t);
+int(*original_open)(char *, int, int);
+int(*original_close)(int);
+void *(*original_SSLHandshake)(void *, void *);
 __attribute__((constructor))
 static void initialize() {
     dispatch_async(dispatch_get_main_queue(), ^ {
-        void *CFURLRequestSetHTTPRequestBody_symbol = 0;
-        MSHookSymbol(CFURLRequestSetHTTPRequestBody_symbol, "_CFURLRequestSetHTTPRequestBody");
-        MSHookFunction(CFURLRequestSetHTTPRequestBody_symbol, (void*)&____CFURLRequestSetHTTPRequestBody, (void**)&original_CFURLRequestSetHTTPRequestBody);
-        void *CFURLRequestSetHTTPRequestBodyStream_symbol = 0;
-        MSHookSymbol(CFURLRequestSetHTTPRequestBodyStream_symbol, "_CFURLRequestSetHTTPRequestBodyStream");
-        MSHookFunction(CFURLRequestSetHTTPRequestBodyStream_symbol, (void*)&____CFURLRequestSetHTTPRequestBodyStream, (void**)&original_CFURLRequestSetHTTPRequestBodyStream);
-        void *CFURLConnectionCreate_symbol = 0;
-        MSHookSymbol(CFURLConnectionCreate_symbol, "_CFURLConnectionCreate");
-        MSHookFunction(CFURLConnectionCreate_symbol, (void*)&____CFURLConnectionCreate, (void**)&original_CFURLConnectionCreate);
-        void *CFURLConnectionCreateWithProperties_symbol = 0;
-        MSHookSymbol(CFURLConnectionCreateWithProperties_symbol, "_CFURLConnectionCreateWithProperties");
-        MSHookFunction(CFURLConnectionCreateWithProperties_symbol, (void*)&____CFURLConnectionCreateWithProperties, (void**)&original_CFURLConnectionCreateWithProperties);
-        void *CFURLRequestSetHTTPHeaderFieldValue_symbol = 0;
-        MSHookSymbol(CFURLRequestSetHTTPHeaderFieldValue_symbol, "_CFURLRequestSetHTTPHeaderFieldValue");
-        MSHookFunction(CFURLRequestSetHTTPHeaderFieldValue_symbol, (void*)&____CFURLRequestSetHTTPHeaderFieldValue, (void**)&original_CFURLRequestSetHTTPHeaderFieldValue);
-        void *CFURLRequestSetMultipleHTTPHeaderFields_symbol = 0;
-        MSHookSymbol(CFURLRequestSetMultipleHTTPHeaderFields_symbol, "_CFURLRequestSetMultipleHTTPHeaderFields");
-        MSHookFunction(CFURLRequestSetMultipleHTTPHeaderFields_symbol, (void*)&____CFURLRequestSetMultipleHTTPHeaderFields, (void**)&original_CFURLRequestSetMultipleHTTPHeaderFields);
-        void *CFURLRequestAppendHTTPHeaderFieldValue_symbol = 0;
-        MSHookSymbol(CFURLRequestAppendHTTPHeaderFieldValue_symbol, "_CFURLRequestAppendHTTPHeaderFieldValue");
-        MSHookFunction(CFURLRequestAppendHTTPHeaderFieldValue_symbol, (void*)&____CFURLRequestAppendHTTPHeaderFieldValue, (void**)&original_CFURLRequestAppendHTTPHeaderFieldValue);
-        void *CFURLRequestCreateMutable_symbol = 0;
-        MSHookSymbol(CFURLRequestCreateMutable_symbol, "_CFURLRequestCreateMutable");
-        MSHookFunction(CFURLRequestCreateMutable_symbol, (void*)&____CFURLRequestCreateMutable, (void**)&original_CFURLRequestCreateMutable);
-        void *CFURLRequestCreateMutableCopy_symbol = 0;
-        MSHookSymbol(CFURLRequestCreateMutableCopy_symbol, "_CFURLRequestCreateMutableCopy");
-        MSHookFunction(CFURLRequestCreateMutableCopy_symbol, (void*)&____CFURLRequestCreateMutableCopy, (void**)&original_CFURLRequestCreateMutableCopy);
-        void *CFURLRequestCreateMutableHTTPRequest_symbol = 0;
-        MSHookSymbol(CFURLRequestCreateMutableHTTPRequest_symbol, "_CFURLRequestCreateMutableHTTPRequest");
-        MSHookFunction(CFURLRequestCreateMutableHTTPRequest_symbol, (void*)&____CFURLRequestCreateMutableHTTPRequest, (void**)&original_CFURLRequestCreateMutableHTTPRequest);
-        void *CFURLRequestCreateHTTPRequest_symbol = 0;
-        MSHookSymbol(CFURLRequestCreateHTTPRequest_symbol, "_CFURLRequestCreateHTTPRequest");
-        MSHookFunction(CFURLRequestCreateHTTPRequest_symbol, (void*)&____CFURLRequestCreateHTTPRequest, (void**)&original_CFURLRequestCreateHTTPRequest);
-        void *CFURLRequestCreateCopy_symbol = 0;
-        MSHookSymbol(CFURLRequestCreateCopy_symbol, "_CFURLRequestCreateCopy");
-        MSHookFunction(CFURLRequestCreateCopy_symbol, (void*)&____CFURLRequestCreateCopy, (void**)&original_CFURLRequestCreateCopy);
-        void *CFURLRequestSetURL_symbol = 0;
-        MSHookSymbol(CFURLRequestSetURL_symbol, "_CFURLRequestSetURL");
-        MSHookFunction(CFURLRequestSetURL_symbol, (void*)&____CFURLRequestSetURL, (void**)&original_CFURLRequestSetURL);
-        void *CFURLConnectionUseCredential_symbol = 0;
-        MSHookSymbol(CFURLConnectionUseCredential_symbol, "_CFURLConnectionUseCredential");
-        MSHookFunction(CFURLConnectionUseCredential_symbol, (void*)&____CFURLConnectionUseCredential, (void**)&original_CFURLConnectionUseCredential);
-        void *CFURLCredentialCreate_symbol = 0;
-        MSHookSymbol(CFURLCredentialCreate_symbol, "_CFURLCredentialCreate");
-        MSHookFunction(CFURLCredentialCreate_symbol, (void*)&____CFURLCredentialCreate, (void**)&original_CFURLCredentialCreate);
-        void *_NSWriteDataToFileWithExtendedAttributes_symbol = 0;
-        MSHookSymbol(_NSWriteDataToFileWithExtendedAttributes_symbol, "__NSWriteDataToFileWithExtendedAttributes");
-        MSHookFunction(_NSWriteDataToFileWithExtendedAttributes_symbol, (void*)&_____NSWriteDataToFileWithExtendedAttributes, (void**)&original__NSWriteDataToFileWithExtendedAttributes);
-        MSHookFunction((void*)&write, (void*)&____write, (void**)&original_write);
-        MSHookFunction((void*)&open, (void*)&____open, (void**)&original_open);
-        MSHookFunction((void*)&close, (void*)&____close, (void**)&original_close);
-        void *SSLHandshake_symbol = 0;
-        MSHookSymbol(SSLHandshake_symbol, "_SSLHandshake");
-        MSHookFunction(SSLHandshake_symbol, (void*)&____SSLHandshake, (void**)&original_SSLHandshake);
+        struct rebinding rebinds[20];
+        original_CFURLRequestSetHTTPRequestBody = (void(*)(CFTypeRef, CFDataRef))dlsym(RTLD_DEFAULT, "CFURLRequestSetHTTPRequestBody");
+        rebinds[0].name = (char*) "CFURLRequestSetHTTPRequestBody";
+        rebinds[0].replacement = (void*) ____CFURLRequestSetHTTPRequestBody;
+        original_CFURLRequestSetHTTPRequestBodyStream = (void(*)(CFTypeRef, CFReadStreamRef))dlsym(RTLD_DEFAULT, "CFURLRequestSetHTTPRequestBodyStream");
+        rebinds[1].name = (char*) "CFURLRequestSetHTTPRequestBodyStream";
+        rebinds[1].replacement = (void*) ____CFURLRequestSetHTTPRequestBodyStream;
+        original_CFURLConnectionCreate = (CFTypeRef(*)(CFAllocatorRef, CFTypeRef, CFTypeRef *))dlsym(RTLD_DEFAULT, "CFURLConnectionCreate");
+        rebinds[2].name = (char*) "CFURLConnectionCreate";
+        rebinds[2].replacement = (void*) ____CFURLConnectionCreate;
+        original_CFURLConnectionCreateWithProperties = (CFTypeRef(*)(CFAllocatorRef, CFTypeRef, CFTypeRef *, CFDictionaryRef))dlsym(RTLD_DEFAULT, "CFURLConnectionCreateWithProperties");
+        rebinds[3].name = (char*) "CFURLConnectionCreateWithProperties";
+        rebinds[3].replacement = (void*) ____CFURLConnectionCreateWithProperties;
+        original_CFURLRequestSetHTTPHeaderFieldValue = (void(*)(CFTypeRef, CFStringRef, CFStringRef))dlsym(RTLD_DEFAULT, "CFURLRequestSetHTTPHeaderFieldValue");
+        rebinds[4].name = (char*) "CFURLRequestSetHTTPHeaderFieldValue";
+        rebinds[4].replacement = (void*) ____CFURLRequestSetHTTPHeaderFieldValue;
+        original_CFURLRequestSetMultipleHTTPHeaderFields = (void(*)(CFTypeRef, CFDictionaryRef))dlsym(RTLD_DEFAULT, "CFURLRequestSetMultipleHTTPHeaderFields");
+        rebinds[5].name = (char*) "CFURLRequestSetMultipleHTTPHeaderFields";
+        rebinds[5].replacement = (void*) ____CFURLRequestSetMultipleHTTPHeaderFields;
+        original_CFURLRequestAppendHTTPHeaderFieldValue = (void(*)(CFTypeRef, CFStringRef, CFStringRef))dlsym(RTLD_DEFAULT, "CFURLRequestAppendHTTPHeaderFieldValue");
+        rebinds[6].name = (char*) "CFURLRequestAppendHTTPHeaderFieldValue";
+        rebinds[6].replacement = (void*) ____CFURLRequestAppendHTTPHeaderFieldValue;
+        original_CFURLRequestCreateMutable = (CFTypeRef(*)(CFAllocatorRef, CFURLRef, int, CFTimeInterval, CFURLRef))dlsym(RTLD_DEFAULT, "CFURLRequestCreateMutable");
+        rebinds[7].name = (char*) "CFURLRequestCreateMutable";
+        rebinds[7].replacement = (void*) ____CFURLRequestCreateMutable;
+        original_CFURLRequestCreateMutableCopy = (CFTypeRef(*)(CFAllocatorRef, CFTypeRef))dlsym(RTLD_DEFAULT, "CFURLRequestCreateMutableCopy");
+        rebinds[8].name = (char*) "CFURLRequestCreateMutableCopy";
+        rebinds[8].replacement = (void*) ____CFURLRequestCreateMutableCopy;
+        original_CFURLRequestCreateMutableHTTPRequest = (CFTypeRef(*)(CFAllocatorRef, CFTypeRef, CFArrayRef, int, CFTimeInterval, CFURLRef))dlsym(RTLD_DEFAULT, "CFURLRequestCreateMutableHTTPRequest");
+        rebinds[9].name = (char*) "CFURLRequestCreateMutableHTTPRequest";
+        rebinds[9].replacement = (void*) ____CFURLRequestCreateMutableHTTPRequest;
+        original_CFURLRequestCreateHTTPRequest = (CFTypeRef(*)(CFAllocatorRef, CFTypeRef, CFArrayRef, int, CFTimeInterval, CFURLRef))dlsym(RTLD_DEFAULT, "CFURLRequestCreateHTTPRequest");
+        rebinds[10].name = (char*) "CFURLRequestCreateHTTPRequest";
+        rebinds[10].replacement = (void*) ____CFURLRequestCreateHTTPRequest;
+        original_CFURLRequestCreateCopy = (CFTypeRef(*)(CFAllocatorRef, CFTypeRef))dlsym(RTLD_DEFAULT, "CFURLRequestCreateCopy");
+        rebinds[11].name = (char*) "CFURLRequestCreateCopy";
+        rebinds[11].replacement = (void*) ____CFURLRequestCreateCopy;
+        original_CFURLRequestSetURL = (void(*)(CFTypeRef, CFTypeRef))dlsym(RTLD_DEFAULT, "CFURLRequestSetURL");
+        rebinds[12].name = (char*) "CFURLRequestSetURL";
+        rebinds[12].replacement = (void*) ____CFURLRequestSetURL;
+        original_CFURLConnectionUseCredential = (void(*)(CFTypeRef, CFTypeRef, CFTypeRef))dlsym(RTLD_DEFAULT, "CFURLConnectionUseCredential");
+        rebinds[13].name = (char*) "CFURLConnectionUseCredential";
+        rebinds[13].replacement = (void*) ____CFURLConnectionUseCredential;
+        original_CFURLCredentialCreate = (CFTypeRef(*)(CFAllocatorRef, CFStringRef, CFStringRef, CFStringRef, int))dlsym(RTLD_DEFAULT, "CFURLCredentialCreate");
+        rebinds[14].name = (char*) "CFURLCredentialCreate";
+        rebinds[14].replacement = (void*) ____CFURLCredentialCreate;
+        original__NSWriteDataToFileWithExtendedAttributes = (void(*)(CFStringRef, CFDataRef, void *, CFDictionaryRef))dlsym(RTLD_DEFAULT, "_NSWriteDataToFileWithExtendedAttributes");
+        rebinds[15].name = (char*) "_NSWriteDataToFileWithExtendedAttributes";
+        rebinds[15].replacement = (void*) _____NSWriteDataToFileWithExtendedAttributes;
+        original_write = (ssize_t(*)(int, const void *, size_t))write;
+        rebinds[16].name = (char*) "write";
+        rebinds[16].replacement = (void*) ____write;
+        original_open = (int(*)(char *, int, int))open;
+        rebinds[17].name = (char*) "open";
+        rebinds[17].replacement = (void*) ____open;
+        original_close = (int(*)(int))close;
+        rebinds[18].name = (char*) "close";
+        rebinds[18].replacement = (void*) ____close;
+        original_SSLHandshake = (void *(*)(void *, void *))dlsym(RTLD_DEFAULT, "SSLHandshake");
+        rebinds[19].name = (char*) "SSLHandshake";
+        rebinds[19].replacement = (void*) ____SSLHandshake;
+        rebind_symbols(rebinds, 20);
     });
 }
 
-__attribute__((constructor))
-static void constructor() {
-}
 void ____CFURLRequestSetHTTPRequestBody(CFTypeRef request, CFDataRef body)
 {
     if (!is_enabled() || !enabled_) {

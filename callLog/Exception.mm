@@ -19,14 +19,15 @@
 //OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #import "Exception.h"
-#import <CydiaSubstrate/CydiaSubstrate.h>
+#import <dlfcn.h>
 #import "ThreadStorage.h"
 #import "log.h"
 #import "Whitelists.h"
 #import "ASM.h"
+#import "fishhook.h"
 
 IMP original_raise_exception = 0;
-IMP original_rethrow_exception = 0;
+void *original_rethrow_exception = 0;
 
 void *original_throw = 0;
 
@@ -157,14 +158,16 @@ static void throw_exception()
 
     void hook_throw_exception()
 {
-
-    MSImageRef libobjc(MSGetImageByName("/usr/lib/libobjc.A.dylib"));
-
-    void *raise_exception_symbol;
-    MSHookSymbol(raise_exception_symbol, "_objc_exception_throw", libobjc);
-    MSHookFunction(raise_exception_symbol, (void*)&throw_exception, &original_throw);
+    original_throw = dlsym(RTLD_DEFAULT, "objc_exception_throw");
+    original_rethrow_exception = dlsym(RTLD_DEFAULT, "objc_exception_rethrow");
     
-    void *rethrow_exception_symbol;
-    MSHookSymbol(rethrow_exception_symbol, "_objc_exception_rethrow");
-    MSHookFunction(rethrow_exception_symbol, (void*)&rethrow_exception, (void**)&original_rethrow_exception);
+    struct rebinding rebind[2];
+    
+    rebind[0].name = (char*)"objc_exception_throw";
+    rebind[0].replacement = (void*)throw_exception;
+    
+    rebind[1].name = (char*)"_objc_exception_rethrow";
+    rebind[1].replacement = (void*)rethrow_exception;
+    
+    rebind_symbols(rebind, 2);
 }

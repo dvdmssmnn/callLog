@@ -33,11 +33,12 @@
 		633C14E41A7037820071CA21 /* HTTPAPI.mm in Sources */ = {isa = PBXBuildFile; fileRef = 633C14E21A7037820071CA21 /* HTTPAPI.mm */; };
 		633C15221A7038060071CA21 /* BrowserClient in Resources */ = {isa = PBXBuildFile; fileRef = 633C15211A7038060071CA21 /* BrowserClient */; };
 		633C15241A70385F0071CA21 /* libz.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 633C15231A70385F0071CA21 /* libz.dylib */; };
+		634603E51B39E47D0016D056 /* fishhook.c in Sources */ = {isa = PBXBuildFile; fileRef = 634603E31B39E47D0016D056 /* fishhook.c */; };
+		634603E61B39E47D0016D056 /* fishhook.h in Headers */ = {isa = PBXBuildFile; fileRef = 634603E41B39E47D0016D056 /* fishhook.h */; };
 		634AF8DD1AFB9D9C00EC9DE0 /* Dev.mm in Sources */ = {isa = PBXBuildFile; fileRef = 634AF8DC1AFB9D9C00EC9DE0 /* Dev.mm */; settings = {COMPILER_FLAGS = "-fno-objc-arc"; }; };
 		635E69C41AB6CD6600FC6BF2 /* Config.mm in Sources */ = {isa = PBXBuildFile; fileRef = 635E69C31AB6CD6600FC6BF2 /* Config.mm */; };
 		6369DFC21AE933BE00C14B78 /* Security.mm in Sources */ = {isa = PBXBuildFile; fileRef = 63775E631ADB9023009B1865 /* Security.mm */; settings = {COMPILER_FLAGS = "-fno-objc-arc"; }; };
 		6369E00B1AE93F6100C14B78 /* CommonCrypto.mm in Sources */ = {isa = PBXBuildFile; fileRef = 6369E00A1AE93F6100C14B78 /* CommonCrypto.mm */; settings = {COMPILER_FLAGS = "-fno-objc-arc"; }; };
-		6381FB451B37556500EC9A49 /* CydiaSubstrate.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 6381FB441B37556500EC9A49 /* CydiaSubstrate.framework */; };
 		639CEADA1A6EDC1E008768CE /* HookHelper.h in Headers */ = {isa = PBXBuildFile; fileRef = 639CEAD81A6EDC1E008768CE /* HookHelper.h */; };
 		639CEADB1A6EDC1E008768CE /* HookHelper.mm in Sources */ = {isa = PBXBuildFile; fileRef = 639CEAD91A6EDC1E008768CE /* HookHelper.mm */; settings = {COMPILER_FLAGS = "-fno-objc-arc"; }; };
 		639CEAE51A6EDF2A008768CE /* ThreadStorage.h in Headers */ = {isa = PBXBuildFile; fileRef = 639CEAE31A6EDF2A008768CE /* ThreadStorage.h */; };
@@ -120,6 +121,8 @@
 		633C14E21A7037820071CA21 /* HTTPAPI.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = HTTPAPI.mm; sourceTree = "<group>"; };
 		633C15211A7038060071CA21 /* BrowserClient */ = {isa = PBXFileReference; lastKnownFileType = folder; path = BrowserClient; sourceTree = "<group>"; };
 		633C15231A70385F0071CA21 /* libz.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libz.dylib; path = usr/lib/libz.dylib; sourceTree = SDKROOT; };
+		634603E31B39E47D0016D056 /* fishhook.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = fishhook.c; sourceTree = "<group>"; };
+		634603E41B39E47D0016D056 /* fishhook.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = fishhook.h; sourceTree = "<group>"; };
 		634AF8DC1AFB9D9C00EC9DE0 /* Dev.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = Dev.mm; sourceTree = "<group>"; };
 		635E69C21AB6CC4500FC6BF2 /* Config.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Config.h; sourceTree = "<group>"; };
 		635E69C31AB6CD6600FC6BF2 /* Config.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = Config.mm; sourceTree = "<group>"; };
@@ -198,7 +201,6 @@
 			buildActionMask = 2147483647;
 			files = (
 				633C15241A70385F0071CA21 /* libz.dylib in Frameworks */,
-				6381FB451B37556500EC9A49 /* CydiaSubstrate.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -229,6 +231,15 @@
 				633C14E21A7037820071CA21 /* HTTPAPI.mm */,
 			);
 			path = HTTP;
+			sourceTree = "<group>";
+		};
+		634603E21B39E47D0016D056 /* fishhook */ = {
+			isa = PBXGroup;
+			children = (
+				634603E31B39E47D0016D056 /* fishhook.c */,
+				634603E41B39E47D0016D056 /* fishhook.h */,
+			);
+			path = fishhook;
 			sourceTree = "<group>";
 		};
 		635E69C11AB6CC2A00FC6BF2 /* Config */ = {
@@ -313,6 +324,7 @@
 		63A60A751A6ED2B10074A58D /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
+				634603E21B39E47D0016D056 /* fishhook */,
 				6381FB441B37556500EC9A49 /* CydiaSubstrate.framework */,
 				63B19AA91AB77E1C00C3121B /* lib_json */,
 				63EDB1741AB22DA10055B707 /* sqlite */,
@@ -447,6 +459,7 @@
 				63D5E4B21AADA4DB0098DF04 /* GCDWebServerResponse.h in Headers */,
 				63A60A561A6ED29D0074A58D /* callLog.h in Headers */,
 				63F0CB661AA6314D00E14F13 /* SQLiteStorage.h in Headers */,
+				634603E61B39E47D0016D056 /* fishhook.h in Headers */,
 				63D5E4B01AADA4DB0098DF04 /* GCDWebServerRequest.h in Headers */,
 				63B798FC1ADD03A8002AE698 /* Exception.h in Headers */,
 				63D5E4AE1AADA4DB0098DF04 /* GCDWebServerHTTPStatusCodes.h in Headers */,
@@ -580,6 +593,7 @@
 				63C125841AF4BBF600D5769A /* CFStream.mm in Sources */,
 				63A60AB91A6ED60F0074A58D /* callLogManager.mm in Sources */,
 				63A9B2B11AF76F31008B31F1 /* CFNetwork.mm in Sources */,
+				634603E51B39E47D0016D056 /* fishhook.c in Sources */,
 				63D5E4BD1AADA4DB0098DF04 /* GCDWebServerDataResponse.m in Sources */,
 				633C14E41A7037820071CA21 /* HTTPAPI.mm in Sources */,
 				63B19AB51AB77E1C00C3121B /* json_value.cpp in Sources */,

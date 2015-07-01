@@ -28,8 +28,9 @@
 #import <pthread.h>
 #import <pthread.h>
 #import "Config.h"
-#import <CydiaSubstrate/CydiaSubstrate.h>
+#import "fishhook.h"
 #import <semaphore.h>
+#import <dlfcn.h>
 
 using namespace std;
 CFReadStreamRef ____CFReadStreamCreateWithBytesNoCopy(CFAllocatorRef alloc, const UInt8 * bytes, CFIndex length, CFAllocatorRef bytesDeallocator);
@@ -72,55 +73,94 @@ void * ____CFReadStreamGetError(CFReadStreamRef stream);
 
 void * ____CFWriteStreamGetError(CFWriteStreamRef stream);
 
-CFReadStreamRef (*original_CFReadStreamCreateWithBytesNoCopy)(CFAllocatorRef, const UInt8 *, CFIndex, CFAllocatorRef);
-CFWriteStreamRef (*original_CFWriteStreamCreateWithBuffer)(CFAllocatorRef, UInt8 *, CFIndex);
-CFWriteStreamRef (*original_CFWriteStreamCreateWithAllocatedBuffers)(CFAllocatorRef, CFAllocatorRef);
-CFReadStreamRef (*original_CFReadStreamCreateWithFile)(CFAllocatorRef, CFURLRef);
-CFWriteStreamRef (*original_CFWriteStreamCreateWithFile)(CFAllocatorRef, CFURLRef);
-void (*original_CFStreamCreatePairWithSocketToHost)(CFAllocatorRef, CFStringRef, UInt32, CFReadStreamRef *, CFWriteStreamRef *);
-void (*original_CFStreamCreatePairWithPeerSocketSignature)(CFAllocatorRef, const CFSocketSignature *, CFReadStreamRef *, CFWriteStreamRef *);
-CFErrorRef (*original_CFReadStreamCopyError)(CFReadStreamRef);
-CFErrorRef (*original_CFWriteStreamCopyError)(CFWriteStreamRef);
-Boolean (*original_CFReadStreamOpen)(CFReadStreamRef);
-Boolean (*original_CFWriteStreamOpen)(CFWriteStreamRef);
-void (*original_CFReadStreamClose)(CFReadStreamRef);
-void (*original_CFWriteStreamClose)(CFWriteStreamRef);
-Boolean (*original_CFReadStreamHasBytesAvailable)(CFReadStreamRef);
-CFIndex (*original_CFReadStreamRead)(CFReadStreamRef, UInt8 *, CFIndex);
-const UInt8 * (*original_CFReadStreamGetBuffer)(CFReadStreamRef, CFIndex, CFIndex *);
-Boolean (*original_CFWriteStreamCanAcceptBytes)(CFWriteStreamRef);
-CFIndex (*original_CFWriteStreamWrite)(CFWriteStreamRef, const UInt8 *, CFIndex);
-void * (*original_CFReadStreamGetError)(CFReadStreamRef);
-void * (*original_CFWriteStreamGetError)(CFWriteStreamRef);
+CFReadStreamRef(*original_CFReadStreamCreateWithBytesNoCopy)(CFAllocatorRef, const UInt8 *, CFIndex, CFAllocatorRef);
+CFWriteStreamRef(*original_CFWriteStreamCreateWithBuffer)(CFAllocatorRef, UInt8 *, CFIndex);
+CFWriteStreamRef(*original_CFWriteStreamCreateWithAllocatedBuffers)(CFAllocatorRef, CFAllocatorRef);
+CFReadStreamRef(*original_CFReadStreamCreateWithFile)(CFAllocatorRef, CFURLRef);
+CFWriteStreamRef(*original_CFWriteStreamCreateWithFile)(CFAllocatorRef, CFURLRef);
+void(*original_CFStreamCreatePairWithSocketToHost)(CFAllocatorRef, CFStringRef, UInt32, CFReadStreamRef *, CFWriteStreamRef *);
+void(*original_CFStreamCreatePairWithPeerSocketSignature)(CFAllocatorRef, const CFSocketSignature *, CFReadStreamRef *, CFWriteStreamRef *);
+CFErrorRef(*original_CFReadStreamCopyError)(CFReadStreamRef);
+CFErrorRef(*original_CFWriteStreamCopyError)(CFWriteStreamRef);
+Boolean(*original_CFReadStreamOpen)(CFReadStreamRef);
+Boolean(*original_CFWriteStreamOpen)(CFWriteStreamRef);
+void(*original_CFReadStreamClose)(CFReadStreamRef);
+void(*original_CFWriteStreamClose)(CFWriteStreamRef);
+Boolean(*original_CFReadStreamHasBytesAvailable)(CFReadStreamRef);
+CFIndex(*original_CFReadStreamRead)(CFReadStreamRef, UInt8 *, CFIndex);
+const UInt8 *(*original_CFReadStreamGetBuffer)(CFReadStreamRef, CFIndex, CFIndex *);
+Boolean(*original_CFWriteStreamCanAcceptBytes)(CFWriteStreamRef);
+CFIndex(*original_CFWriteStreamWrite)(CFWriteStreamRef, const UInt8 *, CFIndex);
+void *(*original_CFReadStreamGetError)(CFReadStreamRef);
+void *(*original_CFWriteStreamGetError)(CFWriteStreamRef);
 __attribute__((constructor))
 static void initialize() {
     dispatch_async(dispatch_get_main_queue(), ^ {
-        MSHookFunction((void*)&CFReadStreamCreateWithBytesNoCopy, (void*)&____CFReadStreamCreateWithBytesNoCopy, (void**)&original_CFReadStreamCreateWithBytesNoCopy);
-        MSHookFunction((void*)&CFWriteStreamCreateWithBuffer, (void*)&____CFWriteStreamCreateWithBuffer, (void**)&original_CFWriteStreamCreateWithBuffer);
-        MSHookFunction((void*)&CFWriteStreamCreateWithAllocatedBuffers, (void*)&____CFWriteStreamCreateWithAllocatedBuffers, (void**)&original_CFWriteStreamCreateWithAllocatedBuffers);
-        MSHookFunction((void*)&CFReadStreamCreateWithFile, (void*)&____CFReadStreamCreateWithFile, (void**)&original_CFReadStreamCreateWithFile);
-        MSHookFunction((void*)&CFWriteStreamCreateWithFile, (void*)&____CFWriteStreamCreateWithFile, (void**)&original_CFWriteStreamCreateWithFile);
-        MSHookFunction((void*)&CFStreamCreatePairWithSocketToHost, (void*)&____CFStreamCreatePairWithSocketToHost, (void**)&original_CFStreamCreatePairWithSocketToHost);
-        MSHookFunction((void*)&CFStreamCreatePairWithPeerSocketSignature, (void*)&____CFStreamCreatePairWithPeerSocketSignature, (void**)&original_CFStreamCreatePairWithPeerSocketSignature);
-        MSHookFunction((void*)&CFReadStreamCopyError, (void*)&____CFReadStreamCopyError, (void**)&original_CFReadStreamCopyError);
-        MSHookFunction((void*)&CFWriteStreamCopyError, (void*)&____CFWriteStreamCopyError, (void**)&original_CFWriteStreamCopyError);
-        MSHookFunction((void*)&CFReadStreamOpen, (void*)&____CFReadStreamOpen, (void**)&original_CFReadStreamOpen);
-        MSHookFunction((void*)&CFWriteStreamOpen, (void*)&____CFWriteStreamOpen, (void**)&original_CFWriteStreamOpen);
-        MSHookFunction((void*)&CFReadStreamClose, (void*)&____CFReadStreamClose, (void**)&original_CFReadStreamClose);
-        MSHookFunction((void*)&CFWriteStreamClose, (void*)&____CFWriteStreamClose, (void**)&original_CFWriteStreamClose);
-        MSHookFunction((void*)&CFReadStreamHasBytesAvailable, (void*)&____CFReadStreamHasBytesAvailable, (void**)&original_CFReadStreamHasBytesAvailable);
-        MSHookFunction((void*)&CFReadStreamRead, (void*)&____CFReadStreamRead, (void**)&original_CFReadStreamRead);
-        MSHookFunction((void*)&CFReadStreamGetBuffer, (void*)&____CFReadStreamGetBuffer, (void**)&original_CFReadStreamGetBuffer);
-        MSHookFunction((void*)&CFWriteStreamCanAcceptBytes, (void*)&____CFWriteStreamCanAcceptBytes, (void**)&original_CFWriteStreamCanAcceptBytes);
-        MSHookFunction((void*)&CFWriteStreamWrite, (void*)&____CFWriteStreamWrite, (void**)&original_CFWriteStreamWrite);
-        MSHookFunction((void*)&CFReadStreamGetError, (void*)&____CFReadStreamGetError, (void**)&original_CFReadStreamGetError);
-        MSHookFunction((void*)&CFWriteStreamGetError, (void*)&____CFWriteStreamGetError, (void**)&original_CFWriteStreamGetError);
+        struct rebinding rebinds[20];
+        original_CFReadStreamCreateWithBytesNoCopy = (CFReadStreamRef(*)(CFAllocatorRef, const UInt8 *, CFIndex, CFAllocatorRef))CFReadStreamCreateWithBytesNoCopy;
+        rebinds[0].name = (char*) "CFReadStreamCreateWithBytesNoCopy";
+        rebinds[0].replacement = (void*) ____CFReadStreamCreateWithBytesNoCopy;
+        original_CFWriteStreamCreateWithBuffer = (CFWriteStreamRef(*)(CFAllocatorRef, UInt8 *, CFIndex))CFWriteStreamCreateWithBuffer;
+        rebinds[1].name = (char*) "CFWriteStreamCreateWithBuffer";
+        rebinds[1].replacement = (void*) ____CFWriteStreamCreateWithBuffer;
+        original_CFWriteStreamCreateWithAllocatedBuffers = (CFWriteStreamRef(*)(CFAllocatorRef, CFAllocatorRef))CFWriteStreamCreateWithAllocatedBuffers;
+        rebinds[2].name = (char*) "CFWriteStreamCreateWithAllocatedBuffers";
+        rebinds[2].replacement = (void*) ____CFWriteStreamCreateWithAllocatedBuffers;
+        original_CFReadStreamCreateWithFile = (CFReadStreamRef(*)(CFAllocatorRef, CFURLRef))CFReadStreamCreateWithFile;
+        rebinds[3].name = (char*) "CFReadStreamCreateWithFile";
+        rebinds[3].replacement = (void*) ____CFReadStreamCreateWithFile;
+        original_CFWriteStreamCreateWithFile = (CFWriteStreamRef(*)(CFAllocatorRef, CFURLRef))CFWriteStreamCreateWithFile;
+        rebinds[4].name = (char*) "CFWriteStreamCreateWithFile";
+        rebinds[4].replacement = (void*) ____CFWriteStreamCreateWithFile;
+        original_CFStreamCreatePairWithSocketToHost = (void(*)(CFAllocatorRef, CFStringRef, UInt32, CFReadStreamRef *, CFWriteStreamRef *))CFStreamCreatePairWithSocketToHost;
+        rebinds[5].name = (char*) "CFStreamCreatePairWithSocketToHost";
+        rebinds[5].replacement = (void*) ____CFStreamCreatePairWithSocketToHost;
+        original_CFStreamCreatePairWithPeerSocketSignature = (void(*)(CFAllocatorRef, const CFSocketSignature *, CFReadStreamRef *, CFWriteStreamRef *))CFStreamCreatePairWithPeerSocketSignature;
+        rebinds[6].name = (char*) "CFStreamCreatePairWithPeerSocketSignature";
+        rebinds[6].replacement = (void*) ____CFStreamCreatePairWithPeerSocketSignature;
+        original_CFReadStreamCopyError = (CFErrorRef(*)(CFReadStreamRef))CFReadStreamCopyError;
+        rebinds[7].name = (char*) "CFReadStreamCopyError";
+        rebinds[7].replacement = (void*) ____CFReadStreamCopyError;
+        original_CFWriteStreamCopyError = (CFErrorRef(*)(CFWriteStreamRef))CFWriteStreamCopyError;
+        rebinds[8].name = (char*) "CFWriteStreamCopyError";
+        rebinds[8].replacement = (void*) ____CFWriteStreamCopyError;
+        original_CFReadStreamOpen = (Boolean(*)(CFReadStreamRef))CFReadStreamOpen;
+        rebinds[9].name = (char*) "CFReadStreamOpen";
+        rebinds[9].replacement = (void*) ____CFReadStreamOpen;
+        original_CFWriteStreamOpen = (Boolean(*)(CFWriteStreamRef))CFWriteStreamOpen;
+        rebinds[10].name = (char*) "CFWriteStreamOpen";
+        rebinds[10].replacement = (void*) ____CFWriteStreamOpen;
+        original_CFReadStreamClose = (void(*)(CFReadStreamRef))CFReadStreamClose;
+        rebinds[11].name = (char*) "CFReadStreamClose";
+        rebinds[11].replacement = (void*) ____CFReadStreamClose;
+        original_CFWriteStreamClose = (void(*)(CFWriteStreamRef))CFWriteStreamClose;
+        rebinds[12].name = (char*) "CFWriteStreamClose";
+        rebinds[12].replacement = (void*) ____CFWriteStreamClose;
+        original_CFReadStreamHasBytesAvailable = (Boolean(*)(CFReadStreamRef))CFReadStreamHasBytesAvailable;
+        rebinds[13].name = (char*) "CFReadStreamHasBytesAvailable";
+        rebinds[13].replacement = (void*) ____CFReadStreamHasBytesAvailable;
+        original_CFReadStreamRead = (CFIndex(*)(CFReadStreamRef, UInt8 *, CFIndex))CFReadStreamRead;
+        rebinds[14].name = (char*) "CFReadStreamRead";
+        rebinds[14].replacement = (void*) ____CFReadStreamRead;
+        original_CFReadStreamGetBuffer = (const UInt8 *(*)(CFReadStreamRef, CFIndex, CFIndex *))CFReadStreamGetBuffer;
+        rebinds[15].name = (char*) "CFReadStreamGetBuffer";
+        rebinds[15].replacement = (void*) ____CFReadStreamGetBuffer;
+        original_CFWriteStreamCanAcceptBytes = (Boolean(*)(CFWriteStreamRef))CFWriteStreamCanAcceptBytes;
+        rebinds[16].name = (char*) "CFWriteStreamCanAcceptBytes";
+        rebinds[16].replacement = (void*) ____CFWriteStreamCanAcceptBytes;
+        original_CFWriteStreamWrite = (CFIndex(*)(CFWriteStreamRef, const UInt8 *, CFIndex))CFWriteStreamWrite;
+        rebinds[17].name = (char*) "CFWriteStreamWrite";
+        rebinds[17].replacement = (void*) ____CFWriteStreamWrite;
+        original_CFReadStreamGetError = (void *(*)(CFReadStreamRef))CFReadStreamGetError;
+        rebinds[18].name = (char*) "CFReadStreamGetError";
+        rebinds[18].replacement = (void*) ____CFReadStreamGetError;
+        original_CFWriteStreamGetError = (void *(*)(CFWriteStreamRef))CFWriteStreamGetError;
+        rebinds[19].name = (char*) "CFWriteStreamGetError";
+        rebinds[19].replacement = (void*) ____CFWriteStreamGetError;
+        rebind_symbols(rebinds, 20);
     });
 }
 
-__attribute__((constructor))
-static void constructor() {
-}
 CFReadStreamRef ____CFReadStreamCreateWithBytesNoCopy(CFAllocatorRef alloc, const UInt8 * bytes, CFIndex length, CFAllocatorRef bytesDeallocator)
 {
     if (!is_enabled() || !enabled_) {

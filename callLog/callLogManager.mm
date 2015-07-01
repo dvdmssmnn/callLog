@@ -22,7 +22,6 @@
 
 #import <Foundation/Foundation.h>
 #import <UIKit/UIKit.h>
-#import <CydiaSubstrate/CydiaSubstrate.h>
 
 #import "Hook.h"
 #import <objc/runtime.h>

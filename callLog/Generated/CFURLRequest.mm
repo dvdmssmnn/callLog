@@ -28,25 +28,25 @@
 #import <pthread.h>
 #import <pthread.h>
 #import "Config.h"
-#import <CydiaSubstrate/CydiaSubstrate.h>
+#import "fishhook.h"
 #import <semaphore.h>
+#import <dlfcn.h>
 
 using namespace std;
 void _____NSURLConnectionDidReceiveData(CFTypeRef connection, CFDataRef data, long a, void * b);
 
-void (*original__NSURLConnectionDidReceiveData)(CFTypeRef, CFDataRef, long, void *);
+void(*original__NSURLConnectionDidReceiveData)(CFTypeRef, CFDataRef, long, void *);
 __attribute__((constructor))
 static void initialize() {
     dispatch_async(dispatch_get_main_queue(), ^ {
-        void *_NSURLConnectionDidReceiveData_symbol = 0;
-        MSHookSymbol(_NSURLConnectionDidReceiveData_symbol, "__NSURLConnectionDidReceiveData");
-        MSHookFunction(_NSURLConnectionDidReceiveData_symbol, (void*)&_____NSURLConnectionDidReceiveData, (void**)&original__NSURLConnectionDidReceiveData);
+        struct rebinding rebinds[1];
+        original__NSURLConnectionDidReceiveData = (void(*)(CFTypeRef, CFDataRef, long, void *))dlsym(RTLD_DEFAULT, "_NSURLConnectionDidReceiveData");
+        rebinds[0].name = (char*) "_NSURLConnectionDidReceiveData";
+        rebinds[0].replacement = (void*) _____NSURLConnectionDidReceiveData;
+        rebind_symbols(rebinds, 1);
     });
 }
 
-__attribute__((constructor))
-static void constructor() {
-}
 void _____NSURLConnectionDidReceiveData(CFTypeRef connection, CFDataRef data, long a, void * b)
 {
     if (!is_enabled() || !enabled_) {

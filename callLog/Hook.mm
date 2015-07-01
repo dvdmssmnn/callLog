@@ -20,13 +20,14 @@
 
 #import "Hook.h"
 
-#import <CydiaSubstrate/CydiaSubstrate.h>
+#import <dlfcn.h>
 #import <objc/message.h>
 
 #import "HookHelper.h"
 #import "ThreadStorage.h"
 
 #import "ASM.h"
+#import "fishhook.h"
 
 void *original_msgSend = 0;
 
@@ -67,5 +68,10 @@ static id msgSend_hook()
 
 void objc_msgSendHook_enable()
 {
-    MSHookFunction((void*)&objc_msgSend, (void*) &msgSend_hook, &original_msgSend);
+    original_msgSend = (void*)objc_msgSend;
+    struct rebinding rebind_objc_msgSend[1];
+    rebind_objc_msgSend[0].name = (char*)"objc_msgSend";
+    rebind_objc_msgSend[0].replacement = (void*)msgSend_hook;
+    
+    rebind_symbols(rebind_objc_msgSend, 1);
 }

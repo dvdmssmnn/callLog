@@ -28,8 +28,9 @@
 #import <pthread.h>
 #import <pthread.h>
 #import "Config.h"
-#import <CydiaSubstrate/CydiaSubstrate.h>
+#import "fishhook.h"
 #import <semaphore.h>
+#import <dlfcn.h>
 #import <CommonCrypto/CommonCryptor.h>
 #import <CommonCrypto/CommonHMAC.h>
 #import <CommonCrypto/CommonCrypto.h>
@@ -124,103 +125,190 @@ int ____CC_SHA512_Final(unsigned char * md, CC_SHA512_CTX * c);
 
 unsigned char * ____CC_SHA512(const void * data, CC_LONG len, unsigned char * md);
 
-CCCryptorStatus (*original_CCCryptorCreate)(CCOperation, CCAlgorithm, CCOptions, const void *, size_t, const void *, CCCryptorRef *);
-CCCryptorStatus (*original_CCCryptorCreateFromData)(CCOperation, CCAlgorithm, CCOptions, const void *, size_t, const void *, const void *, size_t, CCCryptorRef *, size_t *);
-CCCryptorStatus (*original_CCCryptorRelease)(CCCryptorRef);
-CCCryptorStatus (*original_CCCryptorUpdate)(CCCryptorRef, const void *, size_t, void *, size_t, size_t *);
-CCCryptorStatus (*original_CCCryptorFinal)(CCCryptorRef, void *, size_t, size_t *);
-size_t (*original_CCCryptorGetOutputLength)(CCCryptorRef, size_t, bool);
-CCCryptorStatus (*original_CCCryptorReset)(CCCryptorRef, const void *);
-CCCryptorStatus (*original_CCCrypt)(CCOperation, CCAlgorithm, CCOptions, const void *, size_t, const void *, const void *, size_t, void *, size_t, size_t *);
-CCCryptorStatus (*original_CCCryptorCreateWithMode)(CCOperation, CCMode, CCAlgorithm, CCPadding, const void *, const void *, size_t, const void *, size_t, int, CCModeOptions, CCCryptorRef *);
-int (*original_CCKeyDerivationPBKDF)(CCPBKDFAlgorithm, const char *, size_t, const uint8_t *, size_t, CCPseudoRandomAlgorithm, uint, uint8_t *, size_t);
-uint (*original_CCCalibratePBKDF)(CCPBKDFAlgorithm, size_t, size_t, CCPseudoRandomAlgorithm, size_t, uint32_t);
-CCRNGStatus (*original_CCRandomGenerateBytes)(void *, size_t);
-int (*original_CC_MD2_Init)(CC_MD2_CTX *);
-int (*original_CC_MD2_Update)(CC_MD2_CTX *, const void *, CC_LONG);
-int (*original_CC_MD2_Final)(unsigned char *, CC_MD2_CTX *);
-unsigned char * (*original_CC_MD2)(const void *, CC_LONG, unsigned char *);
-int (*original_CC_MD4_Init)(CC_MD4_CTX *);
-int (*original_CC_MD4_Update)(CC_MD4_CTX *, const void *, CC_LONG);
-int (*original_CC_MD4_Final)(unsigned char *, CC_MD4_CTX *);
-unsigned char * (*original_CC_MD4)(const void *, CC_LONG, unsigned char *);
-int (*original_CC_MD5_Init)(CC_MD5_CTX *);
-int (*original_CC_MD5_Update)(CC_MD5_CTX *, const void *, CC_LONG);
-int (*original_CC_MD5_Final)(unsigned char *, CC_MD5_CTX *);
-unsigned char * (*original_CC_MD5)(const void *, CC_LONG, unsigned char *);
-int (*original_CC_SHA1_Init)(CC_SHA1_CTX *);
-int (*original_CC_SHA1_Update)(CC_SHA1_CTX *, const void *, CC_LONG);
-int (*original_CC_SHA1_Final)(unsigned char *, CC_SHA1_CTX *);
-unsigned char * (*original_CC_SHA1)(const void *, CC_LONG, unsigned char *);
-int (*original_CC_SHA224_Init)(CC_SHA256_CTX *);
-int (*original_CC_SHA224_Update)(CC_SHA256_CTX *, const void *, CC_LONG);
-int (*original_CC_SHA224_Final)(unsigned char *, CC_SHA256_CTX *);
-unsigned char * (*original_CC_SHA224)(const void *, CC_LONG, unsigned char *);
-int (*original_CC_SHA256_Init)(CC_SHA256_CTX *);
-int (*original_CC_SHA256_Update)(CC_SHA256_CTX *, const void *, CC_LONG);
-int (*original_CC_SHA256_Final)(unsigned char *, CC_SHA256_CTX *);
-unsigned char * (*original_CC_SHA256)(const void *, CC_LONG, unsigned char *);
-int (*original_CC_SHA384_Init)(CC_SHA512_CTX *);
-int (*original_CC_SHA384_Update)(CC_SHA512_CTX *, const void *, CC_LONG);
-int (*original_CC_SHA384_Final)(unsigned char *, CC_SHA512_CTX *);
-unsigned char * (*original_CC_SHA384)(const void *, CC_LONG, unsigned char *);
-int (*original_CC_SHA512_Init)(CC_SHA512_CTX *);
-int (*original_CC_SHA512_Update)(CC_SHA512_CTX *, const void *, CC_LONG);
-int (*original_CC_SHA512_Final)(unsigned char *, CC_SHA512_CTX *);
-unsigned char * (*original_CC_SHA512)(const void *, CC_LONG, unsigned char *);
+CCCryptorStatus(*original_CCCryptorCreate)(CCOperation, CCAlgorithm, CCOptions, const void *, size_t, const void *, CCCryptorRef *);
+CCCryptorStatus(*original_CCCryptorCreateFromData)(CCOperation, CCAlgorithm, CCOptions, const void *, size_t, const void *, const void *, size_t, CCCryptorRef *, size_t *);
+CCCryptorStatus(*original_CCCryptorRelease)(CCCryptorRef);
+CCCryptorStatus(*original_CCCryptorUpdate)(CCCryptorRef, const void *, size_t, void *, size_t, size_t *);
+CCCryptorStatus(*original_CCCryptorFinal)(CCCryptorRef, void *, size_t, size_t *);
+size_t(*original_CCCryptorGetOutputLength)(CCCryptorRef, size_t, bool);
+CCCryptorStatus(*original_CCCryptorReset)(CCCryptorRef, const void *);
+CCCryptorStatus(*original_CCCrypt)(CCOperation, CCAlgorithm, CCOptions, const void *, size_t, const void *, const void *, size_t, void *, size_t, size_t *);
+CCCryptorStatus(*original_CCCryptorCreateWithMode)(CCOperation, CCMode, CCAlgorithm, CCPadding, const void *, const void *, size_t, const void *, size_t, int, CCModeOptions, CCCryptorRef *);
+int(*original_CCKeyDerivationPBKDF)(CCPBKDFAlgorithm, const char *, size_t, const uint8_t *, size_t, CCPseudoRandomAlgorithm, uint, uint8_t *, size_t);
+uint(*original_CCCalibratePBKDF)(CCPBKDFAlgorithm, size_t, size_t, CCPseudoRandomAlgorithm, size_t, uint32_t);
+CCRNGStatus(*original_CCRandomGenerateBytes)(void *, size_t);
+int(*original_CC_MD2_Init)(CC_MD2_CTX *);
+int(*original_CC_MD2_Update)(CC_MD2_CTX *, const void *, CC_LONG);
+int(*original_CC_MD2_Final)(unsigned char *, CC_MD2_CTX *);
+unsigned char *(*original_CC_MD2)(const void *, CC_LONG, unsigned char *);
+int(*original_CC_MD4_Init)(CC_MD4_CTX *);
+int(*original_CC_MD4_Update)(CC_MD4_CTX *, const void *, CC_LONG);
+int(*original_CC_MD4_Final)(unsigned char *, CC_MD4_CTX *);
+unsigned char *(*original_CC_MD4)(const void *, CC_LONG, unsigned char *);
+int(*original_CC_MD5_Init)(CC_MD5_CTX *);
+int(*original_CC_MD5_Update)(CC_MD5_CTX *, const void *, CC_LONG);
+int(*original_CC_MD5_Final)(unsigned char *, CC_MD5_CTX *);
+unsigned char *(*original_CC_MD5)(const void *, CC_LONG, unsigned char *);
+int(*original_CC_SHA1_Init)(CC_SHA1_CTX *);
+int(*original_CC_SHA1_Update)(CC_SHA1_CTX *, const void *, CC_LONG);
+int(*original_CC_SHA1_Final)(unsigned char *, CC_SHA1_CTX *);
+unsigned char *(*original_CC_SHA1)(const void *, CC_LONG, unsigned char *);
+int(*original_CC_SHA224_Init)(CC_SHA256_CTX *);
+int(*original_CC_SHA224_Update)(CC_SHA256_CTX *, const void *, CC_LONG);
+int(*original_CC_SHA224_Final)(unsigned char *, CC_SHA256_CTX *);
+unsigned char *(*original_CC_SHA224)(const void *, CC_LONG, unsigned char *);
+int(*original_CC_SHA256_Init)(CC_SHA256_CTX *);
+int(*original_CC_SHA256_Update)(CC_SHA256_CTX *, const void *, CC_LONG);
+int(*original_CC_SHA256_Final)(unsigned char *, CC_SHA256_CTX *);
+unsigned char *(*original_CC_SHA256)(const void *, CC_LONG, unsigned char *);
+int(*original_CC_SHA384_Init)(CC_SHA512_CTX *);
+int(*original_CC_SHA384_Update)(CC_SHA512_CTX *, const void *, CC_LONG);
+int(*original_CC_SHA384_Final)(unsigned char *, CC_SHA512_CTX *);
+unsigned char *(*original_CC_SHA384)(const void *, CC_LONG, unsigned char *);
+int(*original_CC_SHA512_Init)(CC_SHA512_CTX *);
+int(*original_CC_SHA512_Update)(CC_SHA512_CTX *, const void *, CC_LONG);
+int(*original_CC_SHA512_Final)(unsigned char *, CC_SHA512_CTX *);
+unsigned char *(*original_CC_SHA512)(const void *, CC_LONG, unsigned char *);
 __attribute__((constructor))
 static void initialize() {
     dispatch_async(dispatch_get_main_queue(), ^ {
-        MSHookFunction((void*)&CCCryptorCreate, (void*)&____CCCryptorCreate, (void**)&original_CCCryptorCreate);
-        MSHookFunction((void*)&CCCryptorCreateFromData, (void*)&____CCCryptorCreateFromData, (void**)&original_CCCryptorCreateFromData);
-        MSHookFunction((void*)&CCCryptorRelease, (void*)&____CCCryptorRelease, (void**)&original_CCCryptorRelease);
-        MSHookFunction((void*)&CCCryptorUpdate, (void*)&____CCCryptorUpdate, (void**)&original_CCCryptorUpdate);
-        MSHookFunction((void*)&CCCryptorFinal, (void*)&____CCCryptorFinal, (void**)&original_CCCryptorFinal);
-        MSHookFunction((void*)&CCCryptorGetOutputLength, (void*)&____CCCryptorGetOutputLength, (void**)&original_CCCryptorGetOutputLength);
-        MSHookFunction((void*)&CCCryptorReset, (void*)&____CCCryptorReset, (void**)&original_CCCryptorReset);
-        MSHookFunction((void*)&CCCrypt, (void*)&____CCCrypt, (void**)&original_CCCrypt);
-        MSHookFunction((void*)&CCCryptorCreateWithMode, (void*)&____CCCryptorCreateWithMode, (void**)&original_CCCryptorCreateWithMode);
-        MSHookFunction((void*)&CCKeyDerivationPBKDF, (void*)&____CCKeyDerivationPBKDF, (void**)&original_CCKeyDerivationPBKDF);
-        MSHookFunction((void*)&CCCalibratePBKDF, (void*)&____CCCalibratePBKDF, (void**)&original_CCCalibratePBKDF);
-        MSHookFunction((void*)&CCRandomGenerateBytes, (void*)&____CCRandomGenerateBytes, (void**)&original_CCRandomGenerateBytes);
-        MSHookFunction((void*)&CC_MD2_Init, (void*)&____CC_MD2_Init, (void**)&original_CC_MD2_Init);
-        MSHookFunction((void*)&CC_MD2_Update, (void*)&____CC_MD2_Update, (void**)&original_CC_MD2_Update);
-        MSHookFunction((void*)&CC_MD2_Final, (void*)&____CC_MD2_Final, (void**)&original_CC_MD2_Final);
-        MSHookFunction((void*)&CC_MD2, (void*)&____CC_MD2, (void**)&original_CC_MD2);
-        MSHookFunction((void*)&CC_MD4_Init, (void*)&____CC_MD4_Init, (void**)&original_CC_MD4_Init);
-        MSHookFunction((void*)&CC_MD4_Update, (void*)&____CC_MD4_Update, (void**)&original_CC_MD4_Update);
-        MSHookFunction((void*)&CC_MD4_Final, (void*)&____CC_MD4_Final, (void**)&original_CC_MD4_Final);
-        MSHookFunction((void*)&CC_MD4, (void*)&____CC_MD4, (void**)&original_CC_MD4);
-        MSHookFunction((void*)&CC_MD5_Init, (void*)&____CC_MD5_Init, (void**)&original_CC_MD5_Init);
-        MSHookFunction((void*)&CC_MD5_Update, (void*)&____CC_MD5_Update, (void**)&original_CC_MD5_Update);
-        MSHookFunction((void*)&CC_MD5_Final, (void*)&____CC_MD5_Final, (void**)&original_CC_MD5_Final);
-        MSHookFunction((void*)&CC_MD5, (void*)&____CC_MD5, (void**)&original_CC_MD5);
-        MSHookFunction((void*)&CC_SHA1_Init, (void*)&____CC_SHA1_Init, (void**)&original_CC_SHA1_Init);
-        MSHookFunction((void*)&CC_SHA1_Update, (void*)&____CC_SHA1_Update, (void**)&original_CC_SHA1_Update);
-        MSHookFunction((void*)&CC_SHA1_Final, (void*)&____CC_SHA1_Final, (void**)&original_CC_SHA1_Final);
-        MSHookFunction((void*)&CC_SHA1, (void*)&____CC_SHA1, (void**)&original_CC_SHA1);
-        MSHookFunction((void*)&CC_SHA224_Init, (void*)&____CC_SHA224_Init, (void**)&original_CC_SHA224_Init);
-        MSHookFunction((void*)&CC_SHA224_Update, (void*)&____CC_SHA224_Update, (void**)&original_CC_SHA224_Update);
-        MSHookFunction((void*)&CC_SHA224_Final, (void*)&____CC_SHA224_Final, (void**)&original_CC_SHA224_Final);
-        MSHookFunction((void*)&CC_SHA224, (void*)&____CC_SHA224, (void**)&original_CC_SHA224);
-        MSHookFunction((void*)&CC_SHA256_Init, (void*)&____CC_SHA256_Init, (void**)&original_CC_SHA256_Init);
-        MSHookFunction((void*)&CC_SHA256_Update, (void*)&____CC_SHA256_Update, (void**)&original_CC_SHA256_Update);
-        MSHookFunction((void*)&CC_SHA256_Final, (void*)&____CC_SHA256_Final, (void**)&original_CC_SHA256_Final);
-        MSHookFunction((void*)&CC_SHA256, (void*)&____CC_SHA256, (void**)&original_CC_SHA256);
-        MSHookFunction((void*)&CC_SHA384_Init, (void*)&____CC_SHA384_Init, (void**)&original_CC_SHA384_Init);
-        MSHookFunction((void*)&CC_SHA384_Update, (void*)&____CC_SHA384_Update, (void**)&original_CC_SHA384_Update);
-        MSHookFunction((void*)&CC_SHA384_Final, (void*)&____CC_SHA384_Final, (void**)&original_CC_SHA384_Final);
-        MSHookFunction((void*)&CC_SHA384, (void*)&____CC_SHA384, (void**)&original_CC_SHA384);
-        MSHookFunction((void*)&CC_SHA512_Init, (void*)&____CC_SHA512_Init, (void**)&original_CC_SHA512_Init);
-        MSHookFunction((void*)&CC_SHA512_Update, (void*)&____CC_SHA512_Update, (void**)&original_CC_SHA512_Update);
-        MSHookFunction((void*)&CC_SHA512_Final, (void*)&____CC_SHA512_Final, (void**)&original_CC_SHA512_Final);
-        MSHookFunction((void*)&CC_SHA512, (void*)&____CC_SHA512, (void**)&original_CC_SHA512);
+        struct rebinding rebinds[44];
+        original_CCCryptorCreate = (CCCryptorStatus(*)(CCOperation, CCAlgorithm, CCOptions, const void *, size_t, const void *, CCCryptorRef *))CCCryptorCreate;
+        rebinds[0].name = (char*) "CCCryptorCreate";
+        rebinds[0].replacement = (void*) ____CCCryptorCreate;
+        original_CCCryptorCreateFromData = (CCCryptorStatus(*)(CCOperation, CCAlgorithm, CCOptions, const void *, size_t, const void *, const void *, size_t, CCCryptorRef *, size_t *))CCCryptorCreateFromData;
+        rebinds[1].name = (char*) "CCCryptorCreateFromData";
+        rebinds[1].replacement = (void*) ____CCCryptorCreateFromData;
+        original_CCCryptorRelease = (CCCryptorStatus(*)(CCCryptorRef))CCCryptorRelease;
+        rebinds[2].name = (char*) "CCCryptorRelease";
+        rebinds[2].replacement = (void*) ____CCCryptorRelease;
+        original_CCCryptorUpdate = (CCCryptorStatus(*)(CCCryptorRef, const void *, size_t, void *, size_t, size_t *))CCCryptorUpdate;
+        rebinds[3].name = (char*) "CCCryptorUpdate";
+        rebinds[3].replacement = (void*) ____CCCryptorUpdate;
+        original_CCCryptorFinal = (CCCryptorStatus(*)(CCCryptorRef, void *, size_t, size_t *))CCCryptorFinal;
+        rebinds[4].name = (char*) "CCCryptorFinal";
+        rebinds[4].replacement = (void*) ____CCCryptorFinal;
+        original_CCCryptorGetOutputLength = (size_t(*)(CCCryptorRef, size_t, bool))CCCryptorGetOutputLength;
+        rebinds[5].name = (char*) "CCCryptorGetOutputLength";
+        rebinds[5].replacement = (void*) ____CCCryptorGetOutputLength;
+        original_CCCryptorReset = (CCCryptorStatus(*)(CCCryptorRef, const void *))CCCryptorReset;
+        rebinds[6].name = (char*) "CCCryptorReset";
+        rebinds[6].replacement = (void*) ____CCCryptorReset;
+        original_CCCrypt = (CCCryptorStatus(*)(CCOperation, CCAlgorithm, CCOptions, const void *, size_t, const void *, const void *, size_t, void *, size_t, size_t *))CCCrypt;
+        rebinds[7].name = (char*) "CCCrypt";
+        rebinds[7].replacement = (void*) ____CCCrypt;
+        original_CCCryptorCreateWithMode = (CCCryptorStatus(*)(CCOperation, CCMode, CCAlgorithm, CCPadding, const void *, const void *, size_t, const void *, size_t, int, CCModeOptions, CCCryptorRef *))CCCryptorCreateWithMode;
+        rebinds[8].name = (char*) "CCCryptorCreateWithMode";
+        rebinds[8].replacement = (void*) ____CCCryptorCreateWithMode;
+        original_CCKeyDerivationPBKDF = (int(*)(CCPBKDFAlgorithm, const char *, size_t, const uint8_t *, size_t, CCPseudoRandomAlgorithm, uint, uint8_t *, size_t))CCKeyDerivationPBKDF;
+        rebinds[9].name = (char*) "CCKeyDerivationPBKDF";
+        rebinds[9].replacement = (void*) ____CCKeyDerivationPBKDF;
+        original_CCCalibratePBKDF = (uint(*)(CCPBKDFAlgorithm, size_t, size_t, CCPseudoRandomAlgorithm, size_t, uint32_t))CCCalibratePBKDF;
+        rebinds[10].name = (char*) "CCCalibratePBKDF";
+        rebinds[10].replacement = (void*) ____CCCalibratePBKDF;
+        original_CCRandomGenerateBytes = (CCRNGStatus(*)(void *, size_t))CCRandomGenerateBytes;
+        rebinds[11].name = (char*) "CCRandomGenerateBytes";
+        rebinds[11].replacement = (void*) ____CCRandomGenerateBytes;
+        original_CC_MD2_Init = (int(*)(CC_MD2_CTX *))CC_MD2_Init;
+        rebinds[12].name = (char*) "CC_MD2_Init";
+        rebinds[12].replacement = (void*) ____CC_MD2_Init;
+        original_CC_MD2_Update = (int(*)(CC_MD2_CTX *, const void *, CC_LONG))CC_MD2_Update;
+        rebinds[13].name = (char*) "CC_MD2_Update";
+        rebinds[13].replacement = (void*) ____CC_MD2_Update;
+        original_CC_MD2_Final = (int(*)(unsigned char *, CC_MD2_CTX *))CC_MD2_Final;
+        rebinds[14].name = (char*) "CC_MD2_Final";
+        rebinds[14].replacement = (void*) ____CC_MD2_Final;
+        original_CC_MD2 = (unsigned char *(*)(const void *, CC_LONG, unsigned char *))CC_MD2;
+        rebinds[15].name = (char*) "CC_MD2";
+        rebinds[15].replacement = (void*) ____CC_MD2;
+        original_CC_MD4_Init = (int(*)(CC_MD4_CTX *))CC_MD4_Init;
+        rebinds[16].name = (char*) "CC_MD4_Init";
+        rebinds[16].replacement = (void*) ____CC_MD4_Init;
+        original_CC_MD4_Update = (int(*)(CC_MD4_CTX *, const void *, CC_LONG))CC_MD4_Update;
+        rebinds[17].name = (char*) "CC_MD4_Update";
+        rebinds[17].replacement = (void*) ____CC_MD4_Update;
+        original_CC_MD4_Final = (int(*)(unsigned char *, CC_MD4_CTX *))CC_MD4_Final;
+        rebinds[18].name = (char*) "CC_MD4_Final";
+        rebinds[18].replacement = (void*) ____CC_MD4_Final;
+        original_CC_MD4 = (unsigned char *(*)(const void *, CC_LONG, unsigned char *))CC_MD4;
+        rebinds[19].name = (char*) "CC_MD4";
+        rebinds[19].replacement = (void*) ____CC_MD4;
+        original_CC_MD5_Init = (int(*)(CC_MD5_CTX *))CC_MD5_Init;
+        rebinds[20].name = (char*) "CC_MD5_Init";
+        rebinds[20].replacement = (void*) ____CC_MD5_Init;
+        original_CC_MD5_Update = (int(*)(CC_MD5_CTX *, const void *, CC_LONG))CC_MD5_Update;
+        rebinds[21].name = (char*) "CC_MD5_Update";
+        rebinds[21].replacement = (void*) ____CC_MD5_Update;
+        original_CC_MD5_Final = (int(*)(unsigned char *, CC_MD5_CTX *))CC_MD5_Final;
+        rebinds[22].name = (char*) "CC_MD5_Final";
+        rebinds[22].replacement = (void*) ____CC_MD5_Final;
+        original_CC_MD5 = (unsigned char *(*)(const void *, CC_LONG, unsigned char *))CC_MD5;
+        rebinds[23].name = (char*) "CC_MD5";
+        rebinds[23].replacement = (void*) ____CC_MD5;
+        original_CC_SHA1_Init = (int(*)(CC_SHA1_CTX *))CC_SHA1_Init;
+        rebinds[24].name = (char*) "CC_SHA1_Init";
+        rebinds[24].replacement = (void*) ____CC_SHA1_Init;
+        original_CC_SHA1_Update = (int(*)(CC_SHA1_CTX *, const void *, CC_LONG))CC_SHA1_Update;
+        rebinds[25].name = (char*) "CC_SHA1_Update";
+        rebinds[25].replacement = (void*) ____CC_SHA1_Update;
+        original_CC_SHA1_Final = (int(*)(unsigned char *, CC_SHA1_CTX *))CC_SHA1_Final;
+        rebinds[26].name = (char*) "CC_SHA1_Final";
+        rebinds[26].replacement = (void*) ____CC_SHA1_Final;
+        original_CC_SHA1 = (unsigned char *(*)(const void *, CC_LONG, unsigned char *))CC_SHA1;
+        rebinds[27].name = (char*) "CC_SHA1";
+        rebinds[27].replacement = (void*) ____CC_SHA1;
+        original_CC_SHA224_Init = (int(*)(CC_SHA256_CTX *))CC_SHA224_Init;
+        rebinds[28].name = (char*) "CC_SHA224_Init";
+        rebinds[28].replacement = (void*) ____CC_SHA224_Init;
+        original_CC_SHA224_Update = (int(*)(CC_SHA256_CTX *, const void *, CC_LONG))CC_SHA224_Update;
+        rebinds[29].name = (char*) "CC_SHA224_Update";
+        rebinds[29].replacement = (void*) ____CC_SHA224_Update;
+        original_CC_SHA224_Final = (int(*)(unsigned char *, CC_SHA256_CTX *))CC_SHA224_Final;
+        rebinds[30].name = (char*) "CC_SHA224_Final";
+        rebinds[30].replacement = (void*) ____CC_SHA224_Final;
+        original_CC_SHA224 = (unsigned char *(*)(const void *, CC_LONG, unsigned char *))CC_SHA224;
+        rebinds[31].name = (char*) "CC_SHA224";
+        rebinds[31].replacement = (void*) ____CC_SHA224;
+        original_CC_SHA256_Init = (int(*)(CC_SHA256_CTX *))CC_SHA256_Init;
+        rebinds[32].name = (char*) "CC_SHA256_Init";
+        rebinds[32].replacement = (void*) ____CC_SHA256_Init;
+        original_CC_SHA256_Update = (int(*)(CC_SHA256_CTX *, const void *, CC_LONG))CC_SHA256_Update;
+        rebinds[33].name = (char*) "CC_SHA256_Update";
+        rebinds[33].replacement = (void*) ____CC_SHA256_Update;
+        original_CC_SHA256_Final = (int(*)(unsigned char *, CC_SHA256_CTX *))CC_SHA256_Final;
+        rebinds[34].name = (char*) "CC_SHA256_Final";
+        rebinds[34].replacement = (void*) ____CC_SHA256_Final;
+        original_CC_SHA256 = (unsigned char *(*)(const void *, CC_LONG, unsigned char *))CC_SHA256;
+        rebinds[35].name = (char*) "CC_SHA256";
+        rebinds[35].replacement = (void*) ____CC_SHA256;
+        original_CC_SHA384_Init = (int(*)(CC_SHA512_CTX *))CC_SHA384_Init;
+        rebinds[36].name = (char*) "CC_SHA384_Init";
+        rebinds[36].replacement = (void*) ____CC_SHA384_Init;
+        original_CC_SHA384_Update = (int(*)(CC_SHA512_CTX *, const void *, CC_LONG))CC_SHA384_Update;
+        rebinds[37].name = (char*) "CC_SHA384_Update";
+        rebinds[37].replacement = (void*) ____CC_SHA384_Update;
+        original_CC_SHA384_Final = (int(*)(unsigned char *, CC_SHA512_CTX *))CC_SHA384_Final;
+        rebinds[38].name = (char*) "CC_SHA384_Final";
+        rebinds[38].replacement = (void*) ____CC_SHA384_Final;
+        original_CC_SHA384 = (unsigned char *(*)(const void *, CC_LONG, unsigned char *))CC_SHA384;
+        rebinds[39].name = (char*) "CC_SHA384";
+        rebinds[39].replacement = (void*) ____CC_SHA384;
+        original_CC_SHA512_Init = (int(*)(CC_SHA512_CTX *))CC_SHA512_Init;
+        rebinds[40].name = (char*) "CC_SHA512_Init";
+        rebinds[40].replacement = (void*) ____CC_SHA512_Init;
+        original_CC_SHA512_Update = (int(*)(CC_SHA512_CTX *, const void *, CC_LONG))CC_SHA512_Update;
+        rebinds[41].name = (char*) "CC_SHA512_Update";
+        rebinds[41].replacement = (void*) ____CC_SHA512_Update;
+        original_CC_SHA512_Final = (int(*)(unsigned char *, CC_SHA512_CTX *))CC_SHA512_Final;
+        rebinds[42].name = (char*) "CC_SHA512_Final";
+        rebinds[42].replacement = (void*) ____CC_SHA512_Final;
+        original_CC_SHA512 = (unsigned char *(*)(const void *, CC_LONG, unsigned char *))CC_SHA512;
+        rebinds[43].name = (char*) "CC_SHA512";
+        rebinds[43].replacement = (void*) ____CC_SHA512;
+        rebind_symbols(rebinds, 44);
     });
 }
 
-__attribute__((constructor))
-static void constructor() {
-}
 CCCryptorStatus ____CCCryptorCreate(CCOperation op, CCAlgorithm alg, CCOptions options, const void * key, size_t keyLength, const void * iv, CCCryptorRef * cryptorRef)
 {
     if (!is_enabled() || !enabled_) {
@@ -1193,6 +1281,9 @@ CCCryptorStatus ____CCCrypt(CCOperation op, CCAlgorithm alg, CCOptions options, 
     parameters[3].description = NULL;
     strncpy(parameters[3].type, "^void", MAX_TYPE_LENGTH);
     snprintf(parameters[3].value, MAX_VALUE_LENGTH, "0x%X", (register_t)key);
+    parameters[3].description = (char*)calloc(2*keyLength+1, sizeof(char));
+    NSData *key_data = [NSData dataWithBytes:key length:keyLength];
+    strncpy(parameters[3].description, [[[[[key_data description] stringByReplacingOccurrencesOfString:@"<" withString:@""] stringByReplacingOccurrencesOfString:@" " withString:@""] stringByReplacingOccurrencesOfString:@">" withString:@""] UTF8String], 2*keyLength);
 //Parse parameter keyLength
     parameters[4].description = NULL;
     strncpy(parameters[4].type, "size_t", MAX_TYPE_LENGTH);
@@ -1201,26 +1292,50 @@ CCCryptorStatus ____CCCrypt(CCOperation op, CCAlgorithm alg, CCOptions options, 
     parameters[5].description = NULL;
     strncpy(parameters[5].type, "^void", MAX_TYPE_LENGTH);
     snprintf(parameters[5].value, MAX_VALUE_LENGTH, "0x%X", (register_t)iv);
+    if(iv&&alg==kCCAlgorithmAES) {
+        parameters[5].description = (char*)calloc(2*16+1, sizeof(char));
+        NSData *iv_data = [NSData dataWithBytes:iv length:16];
+        strncpy(parameters[5].description, [[[[[iv_data description] stringByReplacingOccurrencesOfString:@"<" withString:@""] stringByReplacingOccurrencesOfString:@" " withString:@""] stringByReplacingOccurrencesOfString:@">" withString:@""] UTF8String], 2*16);
+
+    }
+    if(iv&&alg!=kCCAlgorithmAES) {
+        parameters[5].description = (char*)calloc(2*8+1, sizeof(char));
+        NSData *iv_data = [NSData dataWithBytes:iv length:8];
+        strncpy(parameters[5].description, [[[[[iv_data description] stringByReplacingOccurrencesOfString:@"<" withString:@""] stringByReplacingOccurrencesOfString:@" " withString:@""] stringByReplacingOccurrencesOfString:@">" withString:@""] UTF8String], 2*8);
+
+    }
 //Parse parameter dataIn
     parameters[6].description = NULL;
     strncpy(parameters[6].type, "^void", MAX_TYPE_LENGTH);
     snprintf(parameters[6].value, MAX_VALUE_LENGTH, "0x%X", (register_t)dataIn);
+    parameters[6].description = (char*)calloc(2*dataInLength+1, sizeof(char));
+    NSData *dataIn_data = [NSData dataWithBytes:dataIn length:dataInLength];
+    strncpy(parameters[6].description, [[[[[dataIn_data description] stringByReplacingOccurrencesOfString:@"<" withString:@""] stringByReplacingOccurrencesOfString:@" " withString:@""] stringByReplacingOccurrencesOfString:@">" withString:@""] UTF8String], 2*dataInLength);
 //Parse parameter dataInLength
     parameters[7].description = NULL;
     strncpy(parameters[7].type, "size_t", MAX_TYPE_LENGTH);
     snprintf(parameters[7].value, MAX_VALUE_LENGTH, "%d", (int)dataInLength);
-//Parse parameter dataOut
-    parameters[8].description = NULL;
-    strncpy(parameters[8].type, "^void", MAX_TYPE_LENGTH);
-    snprintf(parameters[8].value, MAX_VALUE_LENGTH, "0x%X", (register_t)dataOut);
 //Parse parameter dataOutAvailable
     parameters[9].description = NULL;
     strncpy(parameters[9].type, "size_t", MAX_TYPE_LENGTH);
     snprintf(parameters[9].value, MAX_VALUE_LENGTH, "%d", (int)dataOutAvailable);
+    set_enabled(true);
+    CCCryptorStatus return_value = original_CCCrypt(op, alg, options, key, keyLength, iv, dataIn, dataInLength, dataOut, dataOutAvailable, dataOutMoved);
+    set_enabled(false);
+//Parse parameter dataOut
+    parameters[8].description = NULL;
+    strncpy(parameters[8].type, "^void", MAX_TYPE_LENGTH);
+    snprintf(parameters[8].value, MAX_VALUE_LENGTH, "0x%X", (register_t)dataOut);
+    if(return_value==kCCSuccess) {
+        parameters[8].description = (char*)calloc(2*(dataOutMoved ? (*dataOutMoved) : 0)+1, sizeof(char));
+        NSData *dataOut_data = [NSData dataWithBytes:dataOut length:(dataOutMoved ? (*dataOutMoved) : 0)];
+        strncpy(parameters[8].description, [[[[[dataOut_data description] stringByReplacingOccurrencesOfString:@"<" withString:@""] stringByReplacingOccurrencesOfString:@" " withString:@""] stringByReplacingOccurrencesOfString:@">" withString:@""] UTF8String], 2*(dataOutMoved ? (*dataOutMoved) : 0));
+
+    }
 //Parse parameter dataOutMoved
     parameters[10].description = NULL;
     strncpy(parameters[10].type, "^size_t", MAX_TYPE_LENGTH);
-    snprintf(parameters[10].value, MAX_VALUE_LENGTH, "0x%X", (register_t)dataOutMoved);
+    snprintf(parameters[10].value, MAX_VALUE_LENGTH, "%d", (register_t)*dataOutMoved);
     if (enabled_) {
         dispatch_async(db_queue, ^ {
             set_enabled(false);
@@ -1241,9 +1356,6 @@ CCCryptorStatus ____CCCrypt(CCOperation op, CCAlgorithm alg, CCOptions options, 
         }
         free(parameters);
     }
-    set_enabled(true);
-    CCCryptorStatus return_value = original_CCCrypt(op, alg, options, key, keyLength, iv, dataIn, dataInLength, dataOut, dataOutAvailable, dataOutMoved);
-    set_enabled(false);
     parameter_t return_param;
     return_param.description = NULL;
     strncpy(return_param.type, "CCCryptorStatus", MAX_TYPE_LENGTH);
