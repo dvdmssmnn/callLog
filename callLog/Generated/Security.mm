@@ -104,6 +104,7 @@ static void initialize() {
         original_SecItemDelete = (OSStatus(*)(CFDictionaryRef))SecItemDelete;
         rebinds[10].name = (char*) "SecItemDelete";
         rebinds[10].replacement = (void*) ____SecItemDelete;
+        rebind_symbols(rebinds, 11);
     });
 }
 

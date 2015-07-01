@@ -379,6 +379,7 @@ static void initialize() {
         original_CFURLStopAccessingSecurityScopedResource = (void(*)(CFURLRef))CFURLStopAccessingSecurityScopedResource;
         rebinds[56].name = (char*) "CFURLStopAccessingSecurityScopedResource";
         rebinds[56].replacement = (void*) ____CFURLStopAccessingSecurityScopedResource;
+        rebind_symbols(rebinds, 57);
     });
 }
 

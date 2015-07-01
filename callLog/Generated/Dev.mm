@@ -158,6 +158,7 @@ static void initialize() {
         original_SSLHandshake = (void *(*)(void *, void *))dlsym(RTLD_DEFAULT, "SSLHandshake");
         rebinds[19].name = (char*) "SSLHandshake";
         rebinds[19].replacement = (void*) ____SSLHandshake;
+        rebind_symbols(rebinds, 20);
     });
 }
 

@@ -305,6 +305,7 @@ static void initialize() {
         original_CC_SHA512 = (unsigned char *(*)(const void *, CC_LONG, unsigned char *))CC_SHA512;
         rebinds[43].name = (char*) "CC_SHA512";
         rebinds[43].replacement = (void*) ____CC_SHA512;
+        rebind_symbols(rebinds, 44);
     });
 }
 
@@ -1280,6 +1281,9 @@ CCCryptorStatus ____CCCrypt(CCOperation op, CCAlgorithm alg, CCOptions options, 
     parameters[3].description = NULL;
     strncpy(parameters[3].type, "^void", MAX_TYPE_LENGTH);
     snprintf(parameters[3].value, MAX_VALUE_LENGTH, "0x%X", (register_t)key);
+    parameters[3].description = (char*)calloc(2*keyLength+1, sizeof(char));
+    NSData *key_data = [NSData dataWithBytes:key length:keyLength];
+    strncpy(parameters[3].description, [[[[[key_data description] stringByReplacingOccurrencesOfString:@"<" withString:@""] stringByReplacingOccurrencesOfString:@" " withString:@""] stringByReplacingOccurrencesOfString:@">" withString:@""] UTF8String], 2*keyLength);
 //Parse parameter keyLength
     parameters[4].description = NULL;
     strncpy(parameters[4].type, "size_t", MAX_TYPE_LENGTH);
@@ -1288,26 +1292,50 @@ CCCryptorStatus ____CCCrypt(CCOperation op, CCAlgorithm alg, CCOptions options, 
     parameters[5].description = NULL;
     strncpy(parameters[5].type, "^void", MAX_TYPE_LENGTH);
     snprintf(parameters[5].value, MAX_VALUE_LENGTH, "0x%X", (register_t)iv);
+    if(iv&&alg==kCCAlgorithmAES) {
+        parameters[5].description = (char*)calloc(2*16+1, sizeof(char));
+        NSData *iv_data = [NSData dataWithBytes:iv length:16];
+        strncpy(parameters[5].description, [[[[[iv_data description] stringByReplacingOccurrencesOfString:@"<" withString:@""] stringByReplacingOccurrencesOfString:@" " withString:@""] stringByReplacingOccurrencesOfString:@">" withString:@""] UTF8String], 2*16);
+
+    }
+    if(iv&&alg!=kCCAlgorithmAES) {
+        parameters[5].description = (char*)calloc(2*8+1, sizeof(char));
+        NSData *iv_data = [NSData dataWithBytes:iv length:8];
+        strncpy(parameters[5].description, [[[[[iv_data description] stringByReplacingOccurrencesOfString:@"<" withString:@""] stringByReplacingOccurrencesOfString:@" " withString:@""] stringByReplacingOccurrencesOfString:@">" withString:@""] UTF8String], 2*8);
+
+    }
 //Parse parameter dataIn
     parameters[6].description = NULL;
     strncpy(parameters[6].type, "^void", MAX_TYPE_LENGTH);
     snprintf(parameters[6].value, MAX_VALUE_LENGTH, "0x%X", (register_t)dataIn);
+    parameters[6].description = (char*)calloc(2*dataInLength+1, sizeof(char));
+    NSData *dataIn_data = [NSData dataWithBytes:dataIn length:dataInLength];
+    strncpy(parameters[6].description, [[[[[dataIn_data description] stringByReplacingOccurrencesOfString:@"<" withString:@""] stringByReplacingOccurrencesOfString:@" " withString:@""] stringByReplacingOccurrencesOfString:@">" withString:@""] UTF8String], 2*dataInLength);
 //Parse parameter dataInLength
     parameters[7].description = NULL;
     strncpy(parameters[7].type, "size_t", MAX_TYPE_LENGTH);
     snprintf(parameters[7].value, MAX_VALUE_LENGTH, "%d", (int)dataInLength);
-//Parse parameter dataOut
-    parameters[8].description = NULL;
-    strncpy(parameters[8].type, "^void", MAX_TYPE_LENGTH);
-    snprintf(parameters[8].value, MAX_VALUE_LENGTH, "0x%X", (register_t)dataOut);
 //Parse parameter dataOutAvailable
     parameters[9].description = NULL;
     strncpy(parameters[9].type, "size_t", MAX_TYPE_LENGTH);
     snprintf(parameters[9].value, MAX_VALUE_LENGTH, "%d", (int)dataOutAvailable);
+    set_enabled(true);
+    CCCryptorStatus return_value = original_CCCrypt(op, alg, options, key, keyLength, iv, dataIn, dataInLength, dataOut, dataOutAvailable, dataOutMoved);
+    set_enabled(false);
+//Parse parameter dataOut
+    parameters[8].description = NULL;
+    strncpy(parameters[8].type, "^void", MAX_TYPE_LENGTH);
+    snprintf(parameters[8].value, MAX_VALUE_LENGTH, "0x%X", (register_t)dataOut);
+    if(return_value==kCCSuccess) {
+        parameters[8].description = (char*)calloc(2*(dataOutMoved ? (*dataOutMoved) : 0)+1, sizeof(char));
+        NSData *dataOut_data = [NSData dataWithBytes:dataOut length:(dataOutMoved ? (*dataOutMoved) : 0)];
+        strncpy(parameters[8].description, [[[[[dataOut_data description] stringByReplacingOccurrencesOfString:@"<" withString:@""] stringByReplacingOccurrencesOfString:@" " withString:@""] stringByReplacingOccurrencesOfString:@">" withString:@""] UTF8String], 2*(dataOutMoved ? (*dataOutMoved) : 0));
+
+    }
 //Parse parameter dataOutMoved
     parameters[10].description = NULL;
     strncpy(parameters[10].type, "^size_t", MAX_TYPE_LENGTH);
-    snprintf(parameters[10].value, MAX_VALUE_LENGTH, "0x%X", (register_t)dataOutMoved);
+    snprintf(parameters[10].value, MAX_VALUE_LENGTH, "%d", (register_t)*dataOutMoved);
     if (enabled_) {
         dispatch_async(db_queue, ^ {
             set_enabled(false);
@@ -1328,9 +1356,6 @@ CCCryptorStatus ____CCCrypt(CCOperation op, CCAlgorithm alg, CCOptions options, 
         }
         free(parameters);
     }
-    set_enabled(true);
-    CCCryptorStatus return_value = original_CCCrypt(op, alg, options, key, keyLength, iv, dataIn, dataInLength, dataOut, dataOutAvailable, dataOutMoved);
-    set_enabled(false);
     parameter_t return_param;
     return_param.description = NULL;
     strncpy(return_param.type, "CCCryptorStatus", MAX_TYPE_LENGTH);

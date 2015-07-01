@@ -157,6 +157,7 @@ static void initialize() {
         original_CFWriteStreamGetError = (void *(*)(CFWriteStreamRef))CFWriteStreamGetError;
         rebinds[19].name = (char*) "CFWriteStreamGetError";
         rebinds[19].replacement = (void*) ____CFWriteStreamGetError;
+        rebind_symbols(rebinds, 20);
     });
 }
 

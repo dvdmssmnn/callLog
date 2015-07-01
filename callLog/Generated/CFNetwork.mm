@@ -511,6 +511,7 @@ static void initialize() {
         original_CFStreamCreatePairWithSocketToNetService = (void(*)(CFAllocatorRef, CFNetServiceRef, CFReadStreamRef *, CFWriteStreamRef *))CFStreamCreatePairWithSocketToNetService;
         rebinds[78].name = (char*) "CFStreamCreatePairWithSocketToNetService";
         rebinds[78].replacement = (void*) ____CFStreamCreatePairWithSocketToNetService;
+        rebind_symbols(rebinds, 79);
     });
 }
 

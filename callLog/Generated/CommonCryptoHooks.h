@@ -125,7 +125,15 @@ CCCryptorStatus CCCrypt(
     size_t dataInLength,
     void *dataOut,
     size_t dataOutAvailable,
-    size_t *dataOutMoved);
+    size_t *dataOutMoved)
+{
+  data(key, keyLength);
+  data(dataIn, dataInLength);
+  if (iv && alg == kCCAlgorithmAES) data(iv, 16);
+  if (iv && alg != kCCAlgorithmAES) data(iv, 8);
+  if (return_value == kCCSuccess) out(data(dataOut, *dataOutMoved));
+  out(std(dataOutMoved));
+}
 
 CCCryptorStatus CCCryptorCreateWithMode(
     CCOperation 	op,

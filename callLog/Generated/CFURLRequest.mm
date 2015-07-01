@@ -43,6 +43,7 @@ static void initialize() {
         original__NSURLConnectionDidReceiveData = (void(*)(CFTypeRef, CFDataRef, long, void *))dlsym(RTLD_DEFAULT, "_NSURLConnectionDidReceiveData");
         rebinds[0].name = (char*) "_NSURLConnectionDidReceiveData";
         rebinds[0].replacement = (void*) _____NSURLConnectionDidReceiveData;
+        rebind_symbols(rebinds, 1);
     });
 }
 
